@@ -20,9 +20,33 @@ func TestSetsSinglePlayerWithOneCard(t *testing.T) {
 	p.EXPECT().SetHand(gomock.Any()).DoAndReturn(func(cards []deck.Card) {
 		copy(hand, cards)
 	})
-	d := deck.NewDeck([]deck.Card{{Name: "hello"}})
+	cards := []deck.Card{mocks.NewMockCard(ctrl)}
+
+	d := deck.NewDeck(cards)
 	d.DealCards(1, []deck.Player{p})
-	assert.Equal(t, []deck.Card{{Name: "hello"}}, hand)
+	assert.Equal(t, cards, hand)
+}
+
+func TestEmptiesDeck(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	defer ctrl.Finish()
+
+	p := mocks.NewMockPlayer(ctrl)
+
+	// hand := make([]deck.Card, 1)
+	// p.EXPECT().SetHand(gomock.Any()).DoAndReturn(func(cards []deck.Card) {
+	// 	copy(hand, cards)
+	// })
+
+	p.EXPECT().SetHand(gomock.Any())
+	cards := []deck.Card{mocks.NewMockCard(ctrl)}
+
+	d := deck.NewDeck(cards)
+	d.DealCards(1, []deck.Player{p})
+	// assert.Equal(t, cards, hand)
+	assert.Equal(t, d.Size(), 0)
+
 }
 
 func TestSetsMultiplePlayerWithOneCard(t *testing.T) {
@@ -44,8 +68,12 @@ func TestSetsMultiplePlayerWithOneCard(t *testing.T) {
 		copy(player2Hand, cards)
 	})
 
-	d := deck.NewDeck([]deck.Card{{Name: "hello"}, {Name: "card 2"}})
+	cardHello := mocks.NewMockCard(ctrl)
+
+	cardHi := mocks.NewMockCard(ctrl)
+
+	d := deck.NewDeck([]deck.Card{cardHello, cardHi})
 	d.DealCards(1, []deck.Player{player1, player2})
-	assert.Equal(t, []deck.Card{{Name: "card 2"}}, player1Hand)
-	assert.Equal(t, []deck.Card{{Name: "hello"}}, player2Hand)
+	assert.Equal(t, []deck.Card{cardHi}, player1Hand)
+	assert.Equal(t, []deck.Card{cardHello}, player2Hand)
 }

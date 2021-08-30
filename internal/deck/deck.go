@@ -1,17 +1,16 @@
 package deck
 
-import "log"
+import (
+	"log"
+	"math/rand"
+	"time"
+)
 
 //go:generate mockgen -destination=../../mocks/mock_deck.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Player
 
 type Player interface {
 	SetHand(cards []Card)
-	GetCards() []Card
-}
-
-type stack interface {
-	Size() int
-	Pop(numItems int) []Card
+	GetHand() []Card
 }
 
 type stackInternal struct {
@@ -62,7 +61,16 @@ func (c *cardStack) Pop(numItems int) []Card {
 	return convertCards
 }
 
-func newCardStack(cards []Card) stack {
+func (c *cardStack) Shuffle() {
+	rand.Shuffle(c.Size(), func(i int, j int) {
+		c.items[i], c.items[j] = c.items[j], c.items[i]
+	})
+}
+
+func newCardStack(cards []Card) *cardStack {
+	// maybe move this out?
+	rand.Seed(time.Now().UnixNano())
+
 	convertCards := make([]interface{}, len(cards))
 
 	for i, v := range cards {
@@ -75,18 +83,26 @@ func newCardStack(cards []Card) stack {
 }
 
 type Deck struct {
-	cards stack
+	cards *cardStack
 }
 
-func (d Deck) DealCards(handSize int, players []Player) {
+func (d *Deck) Shuffle() {
+	d.cards.Shuffle()
+}
+
+func (d *Deck) DealCards(handSize int, players []Player) {
 	for _, v := range players {
 		v.SetHand(d.cards.Pop(handSize))
 	}
 
 }
 
-func NewDeck(cards []Card) Deck {
-	return Deck{
+func (d *Deck) Size() int {
+	return d.cards.Size()
+}
+
+func NewDeck(cards []Card) *Deck {
+	return &Deck{
 		cards: newCardStack(cards),
 	}
 }

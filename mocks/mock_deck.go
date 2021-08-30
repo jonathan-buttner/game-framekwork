@@ -34,18 +34,18 @@ func (m *MockPlayer) EXPECT() *MockPlayerMockRecorder {
 	return m.recorder
 }
 
-// GetCards mocks base method.
-func (m *MockPlayer) GetCards() []deck.Card {
+// GetHand mocks base method.
+func (m *MockPlayer) GetHand() []deck.Card {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCards")
+	ret := m.ctrl.Call(m, "GetHand")
 	ret0, _ := ret[0].([]deck.Card)
 	return ret0
 }
 
-// GetCards indicates an expected call of GetCards.
-func (mr *MockPlayerMockRecorder) GetCards() *gomock.Call {
+// GetHand indicates an expected call of GetHand.
+func (mr *MockPlayerMockRecorder) GetHand() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCards", reflect.TypeOf((*MockPlayer)(nil).GetCards))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHand", reflect.TypeOf((*MockPlayer)(nil).GetHand))
 }
 
 // SetHand mocks base method.

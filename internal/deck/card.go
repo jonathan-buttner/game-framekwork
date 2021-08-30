@@ -1,10 +1,21 @@
 package deck
 
-type Card struct {
+import "github.com/jonathan-buttner/game-framework/internal/core"
+
+//go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card
+
+type Card interface {
+	PerformEndRoundAction(game core.Game, orientation CardOrientation)
+	PerformEndTurnAction(game core.Game, orientation CardOrientation)
+	IsOrientationValid(orientation CardOrientation) bool
+	ID() string
+}
+
+type NamedCard struct {
 	Name string
 }
 
-func (c Card) ID() string {
+func (c NamedCard) ID() string {
 	return c.Name
 }
 
