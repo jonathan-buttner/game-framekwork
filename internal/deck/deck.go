@@ -90,11 +90,8 @@ func (d *Deck) Shuffle() {
 	d.cards.Shuffle()
 }
 
-func (d *Deck) DealCards(handSize int, players []Player) {
-	for _, v := range players {
-		v.SetHand(d.cards.Pop(handSize))
-	}
-
+func (d *Deck) DealCards(handSize int, player Player) {
+	player.SetHand(d.cards.Pop(handSize))
 }
 
 func (d *Deck) Size() int {

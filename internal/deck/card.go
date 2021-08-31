@@ -5,10 +5,15 @@ import "github.com/jonathan-buttner/game-framework/internal/core"
 //go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card
 
 type Card interface {
-	PerformEndRoundAction(game core.Game, orientation CardOrientation)
-	PerformEndTurnAction(game core.Game, orientation CardOrientation)
-	IsOrientationValid(orientation CardOrientation) bool
 	ID() string
+	IsOrientationValid(orientation CardOrientation) bool
+	GetOrientationAction(orientation CardOrientation) CardAction
+}
+
+type CardAction interface {
+	PerformEndRoundAction(game core.Game)
+	PerformEndTurnAction(game core.Game)
+	PerformPlayToTableaAction(game core.Game)
 }
 
 type NamedCard struct {

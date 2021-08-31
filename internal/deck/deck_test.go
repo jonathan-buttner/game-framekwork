@@ -23,7 +23,7 @@ func TestSetsSinglePlayerWithOneCard(t *testing.T) {
 	cards := []deck.Card{mocks.NewMockCard(ctrl)}
 
 	d := deck.NewDeck(cards)
-	d.DealCards(1, []deck.Player{p})
+	d.DealCards(1, p)
 	assert.Equal(t, cards, hand)
 }
 
@@ -43,8 +43,7 @@ func TestEmptiesDeck(t *testing.T) {
 	cards := []deck.Card{mocks.NewMockCard(ctrl)}
 
 	d := deck.NewDeck(cards)
-	d.DealCards(1, []deck.Player{p})
-	// assert.Equal(t, cards, hand)
+	d.DealCards(1, p)
 	assert.Equal(t, d.Size(), 0)
 
 }
@@ -73,7 +72,8 @@ func TestSetsMultiplePlayerWithOneCard(t *testing.T) {
 	cardHi := mocks.NewMockCard(ctrl)
 
 	d := deck.NewDeck([]deck.Card{cardHello, cardHi})
-	d.DealCards(1, []deck.Player{player1, player2})
+	d.DealCards(1, player1)
+	d.DealCards(1, player2)
 	assert.Equal(t, []deck.Card{cardHi}, player1Hand)
 	assert.Equal(t, []deck.Card{cardHello}, player2Hand)
 }

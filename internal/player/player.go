@@ -8,30 +8,21 @@ import (
 	"github.com/jonathan-buttner/game-framework/internal/deck"
 )
 
-type playedCard struct {
-	deck.Card
-
-	orientation deck.CardOrientation
-}
-
-func newPlayedCard(card deck.Card, orientation deck.CardOrientation) *playedCard {
-	return &playedCard{card, orientation}
-}
-
 type Player struct {
-	Hand             map[string]deck.Card
-	TableaCards      map[string]playedCard
-	RoundTableaCards map[string]playedCard
-	TurnCard         *playedCard
-	Name             string
+	Hand               map[string]deck.Card
+	TableaCards        map[string]playedCard
+	RoundTableaCards   map[string]playedCard
+	CardsByOrientation cardTypes
+	Name               string
 }
 
 func NewPlayer(name string) *Player {
 	return &Player{
-		Hand:             make(map[string]deck.Card),
-		TableaCards:      make(map[string]playedCard),
-		RoundTableaCards: make(map[string]playedCard),
-		Name:             name,
+		Hand:               make(map[string]deck.Card),
+		TableaCards:        make(map[string]playedCard),
+		RoundTableaCards:   make(map[string]playedCard),
+		CardsByOrientation: newCardTypes(),
+		Name:               name,
 	}
 }
 
@@ -52,7 +43,7 @@ func (p *Player) GetHand() []deck.Card {
 	return hand
 }
 
-func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation) error {
+func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game core.Game) error {
 	cardFromHand, ok := p.Hand[cardID]
 	if !ok {
 		log.Fatalf("requested card from hand: %v does not exist to play", cardID)
@@ -62,16 +53,18 @@ func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientatio
 		return fmt.Errorf("requested card orientation: %v is not valid", orientation.String())
 	}
 
-	p.TurnCard = newPlayedCard(cardFromHand, orientation)
+	cardWithOrientation := newPlayedCard(cardFromHand, orientation)
 	delete(p.Hand, cardFromHand.ID())
 
-	// cardFromHand.performAction(p)
+	p.CardsByOrientation.addCard(cardWithOrientation)
+	cardWithOrientation.PerformPlayToTableaAction(game)
 	return nil
 }
 
 func (p *Player) PerformEndTurn(game core.Game) {
-	p.TurnCard.PerformEndTurnAction(game, p.TurnCard.orientation)
-	p.RoundTableaCards[p.TurnCard.ID()] = *p.TurnCard
+	// p.TurnCard.PerformEndTurnAction(game)
+	// p.RoundTableaCards[p.TurnCard.ID()] = *p.TurnCard
+
 }
 
 func (p *Player) PerformEndRoundAction(game core.Game, cardID string) error {
@@ -80,8 +73,29 @@ func (p *Player) PerformEndRoundAction(game core.Game, cardID string) error {
 		return fmt.Errorf("requested card id: %v is not valid", cardID)
 	}
 
-	card.PerformEndRoundAction(game, card.orientation)
+	card.PerformEndRoundAction(game)
 	return nil
+}
+
+type playedCard struct {
+	deck.Card
+	deck.CardAction
+
+	orientation deck.CardOrientation
+}
+
+func newPlayedCard(card deck.Card, orientation deck.CardOrientation) playedCard {
+	return playedCard{card, card.GetOrientationAction(orientation), orientation}
+}
+
+type cardTypes map[deck.CardOrientation][]playedCard
+
+func newCardTypes() cardTypes {
+	return make(map[deck.CardOrientation][]playedCard)
+}
+
+func (c cardTypes) addCard(card playedCard) {
+	c[card.orientation] = append(c[card.orientation], card)
 }
 
 type Game interface {

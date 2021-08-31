@@ -6,7 +6,7 @@ import (
 )
 
 type Phase struct {
-	currentPlayer *player.Player
+	playerManager *PlayerManager
 }
 
 type DraftAction struct {
@@ -16,29 +16,22 @@ type DraftAction struct {
 
 type Draft struct {
 	Phase
-	players []*player.Player
-	deck    *deck.Deck
+	deck *deck.Deck
 }
 
 func (d *Draft) Setup() {
 	d.deck.Shuffle()
-	d.deck.DealCards(5, d.convertToDeckPlayer())
-	d.currentPlayer = d.players[0]
+
+	// deal 5 cards to each player
+	d.playerManager.ExecuteForPlayers(func(player *player.Player) error {
+		d.deck.DealCards(5, d.playerManager.CurrentPlayer())
+		return nil
+	})
 }
 
-func (d *Draft) convertToDeckPlayer() []deck.Player {
-	deckPlayers := make([]deck.Player, len(d.players))
-
-	for i := range d.players {
-		deckPlayers[i] = d.players[i]
-	}
-
-	return deckPlayers
+func (d *Draft) GetActions() []DraftAction {
+	d.currentPlayer.GetHand()
 }
-
-// func (d *Draft) GetActions() DraftAction {
-// 	d.currentPlayer.GetHand()
-// }
 
 func (d *Draft) PerformAction(action DraftAction) {
 
