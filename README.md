@@ -18,7 +18,7 @@
 
    - Perform upgrade card action or
 
-   - Do nothing => Switch players
+   - Do nothing => Switch players (upgrades must be resolved before the do nothing action is available)
 
 3. Select Card
 

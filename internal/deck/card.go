@@ -1,7 +1,5 @@
 package deck
 
-import "github.com/jonathan-buttner/game-framework/internal/core"
-
 //go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card
 
 type Card interface {
@@ -11,9 +9,13 @@ type Card interface {
 }
 
 type CardAction interface {
-	PerformEndRoundAction(game core.Game)
-	PerformEndTurnAction(game core.Game)
-	PerformPlayToTableaAction(game core.Game)
+	PerformEndRoundAction(game Game)
+	PerformEndTurnAction(game Game)
+	PerformPlayToTableaAction(game Game)
+}
+
+// TODO: move to a central location?
+type Game interface {
 }
 
 type NamedCard struct {

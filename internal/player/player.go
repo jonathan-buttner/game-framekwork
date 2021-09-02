@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jonathan-buttner/game-framework/internal/core"
 	"github.com/jonathan-buttner/game-framework/internal/deck"
 )
 
 type Player struct {
-	Hand               map[string]deck.Card
+	hand               map[string]deck.Card
 	TableaCards        map[string]playedCard
 	RoundTableaCards   map[string]playedCard
 	CardsByOrientation cardTypes
+	Resources          *ResourceHandler
 	Name               string
 }
 
 func NewPlayer(name string) *Player {
 	return &Player{
-		Hand:               make(map[string]deck.Card),
+		Resources:          NewResourceHandler(),
+		hand:               make(map[string]deck.Card),
 		TableaCards:        make(map[string]playedCard),
 		RoundTableaCards:   make(map[string]playedCard),
 		CardsByOrientation: newCardTypes(),
@@ -31,20 +32,20 @@ func (p *Player) SetHand(cards []deck.Card) {
 	for _, card := range cards {
 		newHand[card.ID()] = card
 	}
-	p.Hand = newHand
+	p.hand = newHand
 }
 
 func (p *Player) GetHand() []deck.Card {
 	var hand []deck.Card
-	for _, card := range p.Hand {
+	for _, card := range p.hand {
 		hand = append(hand, card)
 	}
 
 	return hand
 }
 
-func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game core.Game) error {
-	cardFromHand, ok := p.Hand[cardID]
+func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game Game) error {
+	cardFromHand, ok := p.hand[cardID]
 	if !ok {
 		log.Fatalf("requested card from hand: %v does not exist to play", cardID)
 	}
@@ -54,20 +55,14 @@ func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientatio
 	}
 
 	cardWithOrientation := newPlayedCard(cardFromHand, orientation)
-	delete(p.Hand, cardFromHand.ID())
+	delete(p.hand, cardFromHand.ID())
 
 	p.CardsByOrientation.addCard(cardWithOrientation)
 	cardWithOrientation.PerformPlayToTableaAction(game)
 	return nil
 }
 
-func (p *Player) PerformEndTurn(game core.Game) {
-	// p.TurnCard.PerformEndTurnAction(game)
-	// p.RoundTableaCards[p.TurnCard.ID()] = *p.TurnCard
-
-}
-
-func (p *Player) PerformEndRoundAction(game core.Game, cardID string) error {
+func (p *Player) PerformEndRoundAction(game Game, cardID string) error {
 	card, ok := p.RoundTableaCards[cardID]
 	if !ok {
 		return fmt.Errorf("requested card id: %v is not valid", cardID)
