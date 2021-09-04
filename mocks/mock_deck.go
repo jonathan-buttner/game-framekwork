@@ -35,10 +35,10 @@ func (m *MockPlayer) EXPECT() *MockPlayerMockRecorder {
 }
 
 // GetHand mocks base method.
-func (m *MockPlayer) GetHand() []deck.Card {
+func (m *MockPlayer) GetHand() deck.Cards {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHand")
-	ret0, _ := ret[0].([]deck.Card)
+	ret0, _ := ret[0].(deck.Cards)
 	return ret0
 }
 

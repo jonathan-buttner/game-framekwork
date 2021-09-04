@@ -5,26 +5,35 @@ import (
 	"log"
 
 	"github.com/jonathan-buttner/game-framework/internal/deck"
+	"github.com/jonathan-buttner/game-framework/internal/resource"
+	"github.com/jonathan-buttner/game-framework/internal/rules"
 )
 
 type Player struct {
+	rules.GameRules
+
 	hand               map[string]deck.Card
-	TableaCards        map[string]playedCard
-	RoundTableaCards   map[string]playedCard
+	TableaCards        map[string]deck.PositionedCard
+	RoundTableaCards   map[string]deck.PositionedCard
 	CardsByOrientation cardTypes
-	Resources          *ResourceHandler
+	Resources          *resource.ResourceHandler
 	Name               string
 }
 
-func NewPlayer(name string) *Player {
+func NewPlayer(name string, gameRules rules.GameRules) *Player {
 	return &Player{
-		Resources:          NewResourceHandler(),
+		Resources:          resource.NewResourceHandler(),
 		hand:               make(map[string]deck.Card),
-		TableaCards:        make(map[string]playedCard),
-		RoundTableaCards:   make(map[string]playedCard),
+		TableaCards:        make(map[string]deck.PositionedCard),
+		RoundTableaCards:   make(map[string]deck.PositionedCard),
 		CardsByOrientation: newCardTypes(),
+		GameRules:          gameRules,
 		Name:               name,
 	}
+}
+
+func (p *Player) ResourceCountExceedsLimit() bool {
+	return p.Resources.Count > p.GameRules.ResourceLimit
 }
 
 func (p *Player) SetHand(cards []deck.Card) {
@@ -35,7 +44,7 @@ func (p *Player) SetHand(cards []deck.Card) {
 	p.hand = newHand
 }
 
-func (p *Player) GetHand() []deck.Card {
+func (p *Player) GetHand() deck.Cards {
 	var hand []deck.Card
 	for _, card := range p.hand {
 		hand = append(hand, card)
@@ -44,7 +53,19 @@ func (p *Player) GetHand() []deck.Card {
 	return hand
 }
 
-func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game Game) error {
+func (p *Player) ValidOrientations(positionCards []deck.PositionedCard) []deck.PositionedCard {
+	var validCards []deck.PositionedCard
+
+	for _, cardWithPosition := range positionCards {
+		if p.Resources.HasResources(cardWithPosition.Cost()) {
+			validCards = append(validCards, cardWithPosition)
+		}
+	}
+
+	return validCards
+}
+
+func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game deck.Game) error {
 	cardFromHand, ok := p.hand[cardID]
 	if !ok {
 		log.Fatalf("requested card from hand: %v does not exist to play", cardID)
@@ -54,7 +75,7 @@ func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientatio
 		return fmt.Errorf("requested card orientation: %v is not valid", orientation.String())
 	}
 
-	cardWithOrientation := newPlayedCard(cardFromHand, orientation)
+	cardWithOrientation := deck.NewPositionedCard(cardFromHand, orientation)
 	delete(p.hand, cardFromHand.ID())
 
 	p.CardsByOrientation.addCard(cardWithOrientation)
@@ -62,7 +83,7 @@ func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientatio
 	return nil
 }
 
-func (p *Player) PerformEndRoundAction(game Game, cardID string) error {
+func (p *Player) PerformEndRoundAction(game deck.Game, cardID string) error {
 	card, ok := p.RoundTableaCards[cardID]
 	if !ok {
 		return fmt.Errorf("requested card id: %v is not valid", cardID)
@@ -72,26 +93,12 @@ func (p *Player) PerformEndRoundAction(game Game, cardID string) error {
 	return nil
 }
 
-type playedCard struct {
-	deck.Card
-	deck.CardAction
-
-	orientation deck.CardOrientation
-}
-
-func newPlayedCard(card deck.Card, orientation deck.CardOrientation) playedCard {
-	return playedCard{card, card.GetOrientationAction(orientation), orientation}
-}
-
-type cardTypes map[deck.CardOrientation][]playedCard
+type cardTypes map[deck.CardOrientation][]deck.PositionedCard
 
 func newCardTypes() cardTypes {
-	return make(map[deck.CardOrientation][]playedCard)
+	return make(map[deck.CardOrientation][]deck.PositionedCard)
 }
 
-func (c cardTypes) addCard(card playedCard) {
-	c[card.orientation] = append(c[card.orientation], card)
-}
-
-type Game interface {
+func (c cardTypes) addCard(card deck.PositionedCard) {
+	c[card.Orientation] = append(c[card.Orientation], card)
 }

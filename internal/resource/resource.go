@@ -1,4 +1,4 @@
-package player
+package resource
 
 type ResourceType int
 
@@ -32,6 +32,7 @@ type Resource struct {
 
 type ResourceHandler struct {
 	Total     int
+	Count     int
 	Resources map[ResourceType]int
 }
 
@@ -43,5 +44,19 @@ func (r *ResourceHandler) AddResources(resources []Resource) {
 	for _, resource := range resources {
 		r.Total += (resource.Count * resource.Value())
 		r.Resources[resource.ResourceType] += resource.Count
+		r.Count += resource.Count
 	}
 }
+
+func (r *ResourceHandler) HasResources(neededResources ResourceRequirement) bool {
+	for requiredResourceType, requiredNumberResources := range neededResources {
+		numberOfType, hasType := r.Resources[requiredResourceType]
+		if !hasType || requiredNumberResources > numberOfType {
+			return false
+		}
+	}
+
+	return true
+}
+
+type ResourceRequirement map[ResourceType]int

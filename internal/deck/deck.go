@@ -10,7 +10,7 @@ import (
 
 type Player interface {
 	SetHand(cards []Card)
-	GetHand() []Card
+	GetHand() Cards
 }
 
 type stackInternal struct {

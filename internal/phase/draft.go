@@ -12,18 +12,16 @@ type Phase struct {
 }
 
 type DraftAction struct {
-	gameState   *core.GameState
-	player      *player.Player
-	cardID      string
-	orientation deck.CardOrientation
+	player *player.Player
+	card   deck.PositionedCard
 }
 
-func (d *DraftAction) Execute() error {
-	return d.player.PlayCardFromHand(d.cardID, d.orientation, d.gameState)
+func (d *DraftAction) Execute(gameState *core.GameState) error {
+	return d.player.PlayCardFromHand(d.card.ID(), d.card.Orientation, gameState)
 }
 
 type Action interface {
-	Execute() error
+	Execute(gameState *core.GameState) error
 }
 
 type Draft struct {
@@ -41,7 +39,7 @@ func (d *Draft) Setup() {
 		return nil
 	})
 
-	d.step = &DraftCardStep{d.playerManager, d.gameState}
+	d.step = DraftCardStep{d.playerManager, d.gameState}
 }
 
 func (d *Draft) GetActions() []Action {
@@ -49,27 +47,48 @@ func (d *Draft) GetActions() []Action {
 }
 
 func (d *Draft) PerformAction(action Action) {
+	action.Execute(d.gameState)
+	// TODO: handle error
 
+	if d.playerManager.CurrentPlayer().ResourceCountExceedsLimit() {
+		d.step = ReduceResourcesStep{d.playerManager, d.gameState}
+	}
+	// Check if the player's resources are not valid (greater than 10)
+	// if they are invalid them don't change players yet
+
+	// if they are valid then change to new player
 }
 
 type Step interface {
 	GetActions() []Action
 }
 
+type ReduceResourcesStep struct {
+	// TODO: maybe switch these to current player?
+	playerManager *PlayerManager
+
+	// TODO: might not need this?
+	gameState *core.GameState
+}
+
+func (ReduceResourcesStep) GetActions() []Action {
+	// TODO: get the resources that have a count > 0 so as options to give back one
+	return nil
+}
+
 type DraftCardStep struct {
+	// TODO: maybe switch these to current player?
 	playerManager *PlayerManager
 	gameState     *core.GameState
 }
 
-func (d *DraftCardStep) GetActions() []Action {
-	hand := d.playerManager.CurrentPlayer().GetHand()
+func (d DraftCardStep) GetActions() []Action {
+	cardsInHandWithPositions := d.playerManager.CurrentPlayer().GetHand().AllPositionCombinations()
+	validCards := d.playerManager.CurrentPlayer().ValidOrientations(cardsInHandWithPositions)
 
-	// validActions := getValidActions(hand) this determines based on the state of the player
-	// what card orientations are valid
 	var actions []Action
-	for _, card := range hand {
-		// TODO: need to finish the orientations
-		actions = append(actions, &DraftAction{player: d.playerManager.CurrentPlayer(), cardID: card.ID(), orientation: deck.VictoryPoints, gameState: d.gameState})
+	for _, card := range validCards {
+		actions = append(actions, &DraftAction{player: d.playerManager.CurrentPlayer(), card: card})
 	}
 
 	return actions

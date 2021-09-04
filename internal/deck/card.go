@@ -1,11 +1,27 @@
 package deck
 
-//go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card
+import "github.com/jonathan-buttner/game-framework/internal/resource"
+
+//go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,CardAction
 
 type Card interface {
 	ID() string
 	IsOrientationValid(orientation CardOrientation) bool
 	GetOrientationAction(orientation CardOrientation) CardAction
+	Cost() resource.ResourceRequirement
+}
+
+type Cards []Card
+
+func (c Cards) AllPositionCombinations() []PositionedCard {
+	var allPositions []PositionedCard
+	for _, card := range c {
+		for _, orientation := range Orientations {
+			allPositions = append(allPositions, NewPositionedCard(card, orientation))
+		}
+	}
+
+	return allPositions
 }
 
 type CardAction interface {
@@ -14,8 +30,15 @@ type CardAction interface {
 	PerformPlayToTableaAction(game Game)
 }
 
-// TODO: move to a central location?
-type Game interface {
+type PositionedCard struct {
+	Card
+	CardAction
+
+	Orientation CardOrientation
+}
+
+func NewPositionedCard(card Card, orientation CardOrientation) PositionedCard {
+	return PositionedCard{card, card.GetOrientationAction(orientation), orientation}
 }
 
 type NamedCard struct {
@@ -48,4 +71,14 @@ func (c CardOrientation) String() string {
 	default:
 		return "invalid"
 	}
+}
+
+var Orientations = [...]CardOrientation{
+	VictoryPoints,
+	Upgrade,
+	Trade,
+	Generate,
+}
+
+type Game interface {
 }

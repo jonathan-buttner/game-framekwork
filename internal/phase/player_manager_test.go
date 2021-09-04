@@ -5,12 +5,13 @@ import (
 
 	"github.com/jonathan-buttner/game-framework/internal/phase"
 	"github.com/jonathan-buttner/game-framework/internal/player"
+	"github.com/jonathan-buttner/game-framework/internal/rules"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExecutesForAllPlayers(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	playerNames := make(map[string]struct{})
@@ -25,24 +26,24 @@ func TestExecutesForAllPlayers(t *testing.T) {
 }
 
 func TestInitialStartPlayerIsFirstInArray(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	assert.Equal(t, manager.CurrentPlayer().Name, "player1")
 }
 
 func TestHasMorePlayersIsTrueInitiallyWithTwoPlayers(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	assert.True(t, manager.HasMorePlayers())
 }
 
 func TestHasMorePlayersIsFalseAfterNextPlayer(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	manager.NextPlayer()
@@ -50,8 +51,8 @@ func TestHasMorePlayersIsFalseAfterNextPlayer(t *testing.T) {
 }
 
 func TestResetsToPlayer1(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	manager.NextPlayer()
@@ -60,8 +61,8 @@ func TestResetsToPlayer1(t *testing.T) {
 }
 
 func TestNextStartPlayerIsPlayer2(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	manager.NextStartPlayerAndReset()
@@ -69,8 +70,8 @@ func TestNextStartPlayerIsPlayer2(t *testing.T) {
 }
 
 func TestNextStartPlayerIsPlayer2AfterReset(t *testing.T) {
-	player1 := player.NewPlayer("player1")
-	player2 := player.NewPlayer("player2")
+	player1 := player.NewPlayer("player1", rules.NewDefaultGameRules())
+	player2 := player.NewPlayer("player2", rules.NewDefaultGameRules())
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 
 	manager.NextStartPlayerAndReset()
