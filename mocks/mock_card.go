@@ -36,10 +36,10 @@ func (m *MockCard) EXPECT() *MockCardMockRecorder {
 }
 
 // Cost mocks base method.
-func (m *MockCard) Cost() resource.ResourceRequirement {
+func (m *MockCard) Cost() resource.GroupedResources {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Cost")
-	ret0, _ := ret[0].(resource.ResourceRequirement)
+	ret0, _ := ret[0].(resource.GroupedResources)
 	return ret0
 }
 

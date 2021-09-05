@@ -1,14 +1,21 @@
 package phase
 
 import (
+	"fmt"
+
 	"github.com/jonathan-buttner/game-framework/internal/core"
 	"github.com/jonathan-buttner/game-framework/internal/deck"
 	"github.com/jonathan-buttner/game-framework/internal/player"
+	"github.com/jonathan-buttner/game-framework/internal/resource"
 )
 
-type Phase struct {
-	playerManager *PlayerManager
-	gameState     *core.GameState
+type ReduceResourcesAction struct {
+	player       *player.Player
+	resourceType resource.ResourceType
+}
+
+func (r *ReduceResourcesAction) Execute(gameState *core.GameState) error {
+	return r.player.ResourceHandler.RemoveResources(resource.GroupedResources{r.resourceType: 1})
 }
 
 type DraftAction struct {
@@ -22,6 +29,11 @@ func (d *DraftAction) Execute(gameState *core.GameState) error {
 
 type Action interface {
 	Execute(gameState *core.GameState) error
+}
+
+type Phase struct {
+	playerManager *PlayerManager
+	gameState     *core.GameState
 }
 
 type Draft struct {
@@ -47,16 +59,18 @@ func (d *Draft) GetActions() []Action {
 }
 
 func (d *Draft) PerformAction(action Action) {
-	action.Execute(d.gameState)
-	// TODO: handle error
+	err := action.Execute(d.gameState)
+	if err != nil {
+		panic(fmt.Errorf("executing action failed err: %v", err))
+	}
 
 	if d.playerManager.CurrentPlayer().ResourceCountExceedsLimit() {
 		d.step = ReduceResourcesStep{d.playerManager, d.gameState}
+		return
 	}
-	// Check if the player's resources are not valid (greater than 10)
-	// if they are invalid them don't change players yet
 
-	// if they are valid then change to new player
+	d.playerManager.NextPlayer()
+	d.step = DraftCardStep{d.playerManager, d.gameState}
 }
 
 type Step interface {
@@ -71,9 +85,16 @@ type ReduceResourcesStep struct {
 	gameState *core.GameState
 }
 
-func (ReduceResourcesStep) GetActions() []Action {
-	// TODO: get the resources that have a count > 0 so as options to give back one
-	return nil
+func (r ReduceResourcesStep) GetActions() []Action {
+	var actions []Action
+
+	for resType, count := range r.playerManager.CurrentPlayer().ResourceHandler.Resources {
+		if count > 0 {
+			actions = append(actions, &ReduceResourcesAction{player: r.playerManager.CurrentPlayer(), resourceType: resType})
+		}
+	}
+
+	return actions
 }
 
 type DraftCardStep struct {

@@ -8,7 +8,7 @@ type Card interface {
 	ID() string
 	IsOrientationValid(orientation CardOrientation) bool
 	GetOrientationAction(orientation CardOrientation) CardAction
-	Cost() resource.ResourceRequirement
+	Cost() resource.GroupedResources
 }
 
 type Cards []Card

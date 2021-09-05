@@ -40,7 +40,7 @@ func TestValidOrientationsIncludesCard(t *testing.T) {
 	card := deck.NewPositionedCard(needs2BrownsCard, deck.VictoryPoints)
 
 	player := player.NewPlayer("player1", rules.NewDefaultGameRules())
-	player.Resources.AddResources([]resource.Resource{{ResourceType: resource.Brown, Count: 3}})
+	player.ResourceHandler.AddResources(resource.GroupedResources{resource.Brown: 3})
 
 	validCards := player.ValidOrientations([]deck.PositionedCard{card})
 	assert.Len(t, validCards, 1)

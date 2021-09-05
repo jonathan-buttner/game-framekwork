@@ -1,5 +1,7 @@
 package resource
 
+import "fmt"
+
 type ResourceType int
 
 const (
@@ -40,15 +42,33 @@ func NewResourceHandler() *ResourceHandler {
 	return &ResourceHandler{Resources: make(map[ResourceType]int)}
 }
 
-func (r *ResourceHandler) AddResources(resources []Resource) {
-	for _, resource := range resources {
-		r.Total += (resource.Count * resource.Value())
-		r.Resources[resource.ResourceType] += resource.Count
-		r.Count += resource.Count
+func (r *ResourceHandler) RemoveResources(resources GroupedResources) error {
+	if !r.HasResources(resources) {
+		return fmt.Errorf("player does not have all of the requested resources %v", resources)
+	}
+
+	for resType, resCount := range resources {
+		r.Total -= (resCount * resType.Value())
+		r.Resources[resType] -= resCount
+		r.Count -= resCount
+
+		if r.Resources[resType] <= 0 {
+			delete(r.Resources, resType)
+		}
+	}
+
+	return nil
+}
+
+func (r *ResourceHandler) AddResources(resources GroupedResources) {
+	for resType, count := range resources {
+		r.Total += (count * resType.Value())
+		r.Resources[resType] += count
+		r.Count += count
 	}
 }
 
-func (r *ResourceHandler) HasResources(neededResources ResourceRequirement) bool {
+func (r *ResourceHandler) HasResources(neededResources GroupedResources) bool {
 	for requiredResourceType, requiredNumberResources := range neededResources {
 		numberOfType, hasType := r.Resources[requiredResourceType]
 		if !hasType || requiredNumberResources > numberOfType {
@@ -59,4 +79,4 @@ func (r *ResourceHandler) HasResources(neededResources ResourceRequirement) bool
 	return true
 }
 
-type ResourceRequirement map[ResourceType]int
+type GroupedResources map[ResourceType]int

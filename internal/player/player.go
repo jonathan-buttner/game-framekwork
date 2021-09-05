@@ -16,13 +16,13 @@ type Player struct {
 	TableaCards        map[string]deck.PositionedCard
 	RoundTableaCards   map[string]deck.PositionedCard
 	CardsByOrientation cardTypes
-	Resources          *resource.ResourceHandler
+	ResourceHandler    *resource.ResourceHandler
 	Name               string
 }
 
 func NewPlayer(name string, gameRules rules.GameRules) *Player {
 	return &Player{
-		Resources:          resource.NewResourceHandler(),
+		ResourceHandler:    resource.NewResourceHandler(),
 		hand:               make(map[string]deck.Card),
 		TableaCards:        make(map[string]deck.PositionedCard),
 		RoundTableaCards:   make(map[string]deck.PositionedCard),
@@ -33,7 +33,7 @@ func NewPlayer(name string, gameRules rules.GameRules) *Player {
 }
 
 func (p *Player) ResourceCountExceedsLimit() bool {
-	return p.Resources.Count > p.GameRules.ResourceLimit
+	return p.ResourceHandler.Count > p.GameRules.ResourceLimit
 }
 
 func (p *Player) SetHand(cards []deck.Card) {
@@ -57,7 +57,7 @@ func (p *Player) ValidOrientations(positionCards []deck.PositionedCard) []deck.P
 	var validCards []deck.PositionedCard
 
 	for _, cardWithPosition := range positionCards {
-		if p.Resources.HasResources(cardWithPosition.Cost()) {
+		if p.ResourceHandler.HasResources(cardWithPosition.Cost()) {
 			validCards = append(validCards, cardWithPosition)
 		}
 	}
