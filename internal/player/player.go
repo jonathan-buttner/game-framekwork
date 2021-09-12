@@ -96,7 +96,7 @@ func (p *Player) PerformEndRoundAction(game deck.Game, cardID string) error {
 type cardTypes map[deck.CardOrientation][]deck.PositionedCard
 
 func newCardTypes() cardTypes {
-	return make(map[deck.CardOrientation][]deck.PositionedCard)
+	return make(cardTypes)
 }
 
 func (c cardTypes) addCard(card deck.PositionedCard) {

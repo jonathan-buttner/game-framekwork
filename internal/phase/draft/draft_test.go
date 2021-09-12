@@ -31,7 +31,7 @@ func TestSetupDeals5Cards(t *testing.T) {
 func newDraftPhase(ctrl *gomock.Controller) (*draft.Draft, []*player.Player) {
 	deck := createDeck(ctrl)
 	basePhase, players := createBasePhase()
-	phase := draft.NewDraftPhase(basePhase, deck)
+	phase := draft.NewDraftPhase(basePhase, deck, 5)
 
 	return phase, players
 }

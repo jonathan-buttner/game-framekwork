@@ -13,4 +13,14 @@ type Action interface {
 type Phase struct {
 	PlayerManager *PlayerManager
 	GameState     *core.GameState
+	Step          Step
+}
+
+type PlayerTurnHandler interface {
+	GoToNextPlayer()
+}
+
+type PhaseWithTurnHandler struct {
+	PlayerTurnHandler
+	Phase
 }
