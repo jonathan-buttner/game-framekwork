@@ -19,8 +19,6 @@ import (
 func TestSetupDeals5Cards(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	defer ctrl.Finish()
-
 	phase, players := newDraftPhase(ctrl)
 	phase.Setup()
 
@@ -37,16 +35,16 @@ func newDraftPhase(ctrl *gomock.Controller) (*draft.Draft, []*player.Player) {
 }
 
 func createDeck(ctrl *gomock.Controller) *deck.Deck {
-	cardAction := mocks.NewMockCardAction(ctrl)
+	cardAction := mocks.NewMockOrientationActions(ctrl)
 	cardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
+	cardAction.EXPECT().Cost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
 
 	var cards []deck.Card
 
 	for i := 0; i < 10; i++ {
 		card := mocks.NewMockCard(ctrl)
 		card.EXPECT().ID().Return(fmt.Sprintf("%v", i)).AnyTimes()
-		card.EXPECT().GetOrientationAction(gomock.Any()).Return(cardAction).AnyTimes()
-		card.EXPECT().Cost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
+		card.EXPECT().GetOrientationActions(gomock.Any()).Return(cardAction).AnyTimes()
 		card.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
 
 		cards = append(cards, card)
@@ -71,8 +69,6 @@ func createBasePhase() (phase.Phase, []*player.Player) {
 func TestGetActionsReturns20Actions(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	defer ctrl.Finish()
-
 	phase, _ := newDraftPhase(ctrl)
 
 	phase.Setup()
@@ -82,8 +78,6 @@ func TestGetActionsReturns20Actions(t *testing.T) {
 
 func TestGetActionsForSecondPlayerReturns20Actions(t *testing.T) {
 	ctrl := gomock.NewController(t)
-
-	defer ctrl.Finish()
 
 	phase, _ := newDraftPhase(ctrl)
 

@@ -6,7 +6,7 @@ type GameRules struct {
 	ResourceLimit int
 }
 
-func (g GameRules) IncreaseResourceLimit(limit int) GameRules {
+func NewResourceLimit(limit int) GameRules {
 	return GameRules{ResourceLimit: limit}
 }
 

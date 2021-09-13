@@ -1,6 +1,11 @@
 package phase
 
-import "github.com/jonathan-buttner/game-framework/internal/core"
+import (
+	"github.com/jonathan-buttner/game-framework/internal/core"
+	"github.com/jonathan-buttner/game-framework/internal/player"
+)
+
+//go:generate mockgen -destination=../../mocks/mock_phase.go -package=mocks github.com/jonathan-buttner/game-framework/internal/phase PhaseHandler
 
 type Step interface {
 	GetActions() []Action
@@ -16,11 +21,16 @@ type Phase struct {
 	Step          Step
 }
 
-type PlayerTurnHandler interface {
-	GoToNextPlayer()
+func (p *Phase) SetStep(step Step) {
+	p.Step = step
 }
 
-type PhaseWithTurnHandler struct {
-	PlayerTurnHandler
-	Phase
+func (p *Phase) CurrentPlayer() *player.Player {
+	return p.PlayerManager.CurrentPlayer()
+}
+
+type PhaseHandler interface {
+	SetStep(step Step)
+	CurrentPlayer() *player.Player
+	NextPlayer()
 }

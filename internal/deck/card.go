@@ -2,13 +2,12 @@ package deck
 
 import "github.com/jonathan-buttner/game-framework/internal/resource"
 
-//go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,CardAction
+//go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,OrientationActions
 
 type Card interface {
 	ID() string
 	IsOrientationValid(orientation CardOrientation) bool
-	GetOrientationAction(orientation CardOrientation) CardAction
-	Cost() resource.GroupedResources
+	GetOrientationActions(orientation CardOrientation) OrientationActions
 }
 
 type Cards []Card
@@ -24,21 +23,22 @@ func (c Cards) AllPositionCombinations() []PositionedCard {
 	return allPositions
 }
 
-type CardAction interface {
+type OrientationActions interface {
 	PerformEndRoundAction(game Game)
 	PerformEndTurnAction(game Game)
 	PerformPlayToTableaAction(game Game)
+	Cost() resource.GroupedResources
 }
 
 type PositionedCard struct {
 	Card
-	CardAction
+	OrientationActions
 
 	Orientation CardOrientation
 }
 
 func NewPositionedCard(card Card, orientation CardOrientation) PositionedCard {
-	return PositionedCard{card, card.GetOrientationAction(orientation), orientation}
+	return PositionedCard{card, card.GetOrientationActions(orientation), orientation}
 }
 
 type NamedCard struct {

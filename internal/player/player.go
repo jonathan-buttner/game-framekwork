@@ -10,11 +10,11 @@ import (
 )
 
 type Player struct {
-	rules.GameRules
+	hand map[string]deck.Card
 
-	hand               map[string]deck.Card
 	TableaCards        map[string]deck.PositionedCard
 	RoundTableaCards   map[string]deck.PositionedCard
+	GameRules          rules.GameRules
 	CardsByOrientation cardTypes
 	ResourceHandler    *resource.ResourceHandler
 	Name               string
@@ -30,6 +30,10 @@ func NewPlayer(name string, gameRules rules.GameRules) *Player {
 		GameRules:          gameRules,
 		Name:               name,
 	}
+}
+
+func (p *Player) SetGameRules(gameRules rules.GameRules) {
+	p.GameRules = gameRules
 }
 
 func (p *Player) ResourceCountExceedsLimit() bool {
@@ -51,18 +55,6 @@ func (p *Player) GetHand() deck.Cards {
 	}
 
 	return hand
-}
-
-func (p *Player) ValidOrientations(positionCards []deck.PositionedCard) []deck.PositionedCard {
-	var validCards []deck.PositionedCard
-
-	for _, cardWithPosition := range positionCards {
-		if p.ResourceHandler.HasResources(cardWithPosition.Cost()) {
-			validCards = append(validCards, cardWithPosition)
-		}
-	}
-
-	return validCards
 }
 
 func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game deck.Game) error {

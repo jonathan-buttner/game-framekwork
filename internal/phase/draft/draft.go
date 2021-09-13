@@ -12,7 +12,7 @@ import (
 /**
 States:
 Choose card
-Trade/Complete goal/skip
+Trade/Complete goal/skip potentially pull trade out into its own step because the player must pay at least a yellow?
 Reduce resources
 
 Next player (repeat choose card - reduce)
@@ -61,12 +61,8 @@ func (d *Draft) PerformAction(action phase.Action) {
 	// }
 }
 
-func (d *Draft) GoToNextPlayer() {
+func (d *Draft) NextPlayer() {
 
-}
-
-func (d *Draft) createPhaseWithTurnHandler() *phase.PhaseWithTurnHandler {
-	return &phase.PhaseWithTurnHandler{PlayerTurnHandler: d, Phase: d.Phase}
 }
 
 type chooseCardStep struct {
@@ -75,11 +71,12 @@ type chooseCardStep struct {
 
 func (d chooseCardStep) GetActions() []phase.Action {
 	cardsInHandWithPositions := d.draft.PlayerManager.CurrentPlayer().GetHand().AllPositionCombinations()
-	validCards := d.draft.PlayerManager.CurrentPlayer().ValidOrientations(cardsInHandWithPositions)
 
 	var actions []phase.Action
-	for _, card := range validCards {
-		actions = append(actions, &chooseCardAction{draft: d.draft, card: card})
+	for _, cardWithPosition := range cardsInHandWithPositions {
+		if d.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(cardWithPosition.Cost()) {
+			actions = append(actions, &chooseCardAction{draft: d.draft, card: cardWithPosition})
+		}
 	}
 
 	return actions
@@ -92,38 +89,7 @@ type chooseCardAction struct {
 
 func (d *chooseCardAction) Execute(gameState *core.GameState) error {
 	err := d.draft.PlayerManager.CurrentPlayer().PlayCardFromHand(d.card.ID(), d.card.Orientation, gameState)
-	d.draft.Step = useResourcesStep{d.draft}
+	d.draft.SetStep(phase.UseResourcesStep{Phase: d.draft})
 
 	return err
-}
-
-type useResourcesStep struct {
-	draft *Draft
-}
-
-func (u useResourcesStep) GetActions() []phase.Action {
-	return nil
-}
-
-type useResourcesAction struct {
-	draft *Draft
-	card  deck.PositionedCard
-}
-
-func (u *useResourcesAction) Execute(gameState *core.GameState) error {
-	return nil
-}
-
-type skipUseResourcesAction struct {
-	draft *Draft
-}
-
-func (s *skipUseResourcesAction) Execute(gameState *core.GameState) error {
-	if s.draft.PlayerManager.CurrentPlayer().ResourceCountExceedsLimit() {
-		s.draft.Step = phase.NewReduceResourcesStep(s.draft.createPhaseWithTurnHandler())
-	} else {
-		// switch to next player and go back to choose card step
-	}
-
-	return nil
 }
