@@ -62,24 +62,27 @@ func (d *Draft) PerformAction(action phase.Action) {
 }
 
 func (d *Draft) NextPlayer() {
-
 }
 
 type chooseCardStep struct {
 	draft *Draft
 }
 
-func (d chooseCardStep) GetActions() []phase.Action {
-	cardsInHandWithPositions := d.draft.PlayerManager.CurrentPlayer().GetHand().AllPositionCombinations()
+func (c chooseCardStep) GetActions() []phase.Action {
+	cardsInHandWithPositions := c.draft.PlayerManager.CurrentPlayer().GetHand().AllPositionCombinations()
 
 	var actions []phase.Action
 	for _, cardWithPosition := range cardsInHandWithPositions {
-		if d.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(cardWithPosition.Cost()) {
-			actions = append(actions, &chooseCardAction{draft: d.draft, card: cardWithPosition})
+		if c.isChoosableCard(cardWithPosition) {
+			actions = append(actions, &chooseCardAction{draft: c.draft, card: cardWithPosition})
 		}
 	}
 
 	return actions
+}
+
+func (c chooseCardStep) isChoosableCard(card deck.PositionedCard) bool {
+	return c.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) && card.IsOrientationValid(c.draft.GameState)
 }
 
 type chooseCardAction struct {
@@ -87,9 +90,9 @@ type chooseCardAction struct {
 	card  deck.PositionedCard
 }
 
-func (d *chooseCardAction) Execute(gameState *core.GameState) error {
-	err := d.draft.PlayerManager.CurrentPlayer().PlayCardFromHand(d.card.ID(), d.card.Orientation, gameState)
-	d.draft.SetStep(phase.UseResourcesStep{Phase: d.draft})
+func (c *chooseCardAction) Execute(gameState *core.GameState) error {
+	err := c.draft.PlayerManager.CurrentPlayer().PlayCardFromHand(c.card.ID(), c.card.Orientation, gameState)
+	c.draft.SetStep(phase.UseResourcesStep{Phase: c.draft})
 
 	return err
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/jonathan-buttner/game-framework/internal/core"
+	"github.com/jonathan-buttner/game-framework/internal/deck"
 	"github.com/jonathan-buttner/game-framework/internal/phase"
 	"github.com/jonathan-buttner/game-framework/internal/player"
 	"github.com/jonathan-buttner/game-framework/internal/resource"
@@ -21,16 +22,6 @@ func TestNoActionsWhenNoResources(t *testing.T) {
 	resStep := phase.NewReduceResourcesStep(handler)
 
 	assert.Nil(t, resStep.GetActions())
-}
-
-func createPhaseHandlerAndPlayer(ctrl *gomock.Controller) (*mocks.MockPhaseHandler, *player.Player) {
-	player1 := player.NewPlayer("player", rules.NewDefaultGameRules())
-
-	handler := mocks.NewMockPhaseHandler(ctrl)
-	handler.EXPECT().CurrentPlayer().Return(player1).AnyTimes()
-	handler.EXPECT().SetStep(gomock.Any()).AnyTimes()
-
-	return handler, player1
 }
 
 func TestExecutingActionReducesYellow(t *testing.T) {
@@ -77,4 +68,75 @@ func TestStaysInReduceStateWhenStillOverTheLimit(t *testing.T) {
 	assert.Len(t, resStep.GetActions(), 1)
 	resStep.GetActions()[0].Execute(&core.GameState{})
 	assert.Equal(t, player.ResourceHandler.Resources[resource.Brown], 1)
+}
+
+func TestUseResourcesStepGetActionIncludesVictoryPointCards(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	handler, player := createPhaseHandlerAndPlayer(ctrl)
+	setupPlayerWithBrownAndOneVictoryCard(ctrl, player)
+
+	step := phase.UseResourcesStep{Phase: handler}
+	actions := step.GetActions()
+	actions[0].Execute(&core.GameState{})
+
+	assert.Len(t, actions, 2)
+}
+
+func TestUseResourcesStepGetActionIncludesTradeCards(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	handler, player := createPhaseHandlerAndPlayer(ctrl)
+	setupPlayerWithBrownAndOneTradeCard(ctrl, player)
+
+	step := phase.UseResourcesStep{Phase: handler}
+	actions := step.GetActions()
+	actions[0].Execute(&core.GameState{})
+
+	assert.Len(t, actions, 2)
+}
+
+func TestUseResourcesStepGetActionIncludesSkip(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	handler, _ := createPhaseHandlerAndPlayer(ctrl)
+	handler.EXPECT().NextPlayer().Times(1)
+
+	step := phase.UseResourcesStep{Phase: handler}
+	actions := step.GetActions()
+	actions[0].Execute(&core.GameState{})
+
+	assert.Len(t, actions, 1)
+}
+
+func createPhaseHandlerAndPlayer(ctrl *gomock.Controller) (*mocks.MockPhaseHandler, *player.Player) {
+	player1 := player.NewPlayer("player", rules.NewDefaultGameRules())
+
+	handler := mocks.NewMockPhaseHandler(ctrl)
+	handler.EXPECT().CurrentPlayer().Return(player1).AnyTimes()
+	handler.EXPECT().SetStep(gomock.Any()).AnyTimes()
+
+	return handler, player1
+}
+
+func setupPlayerWithBrownAndOneVictoryCard(ctrl *gomock.Controller, player *player.Player) {
+	player.ResourceHandler.AddResources(resource.GroupedResources{resource.Brown: 1})
+
+	actions := mocks.NewMockOrientationActions(ctrl)
+	actions.EXPECT().Cost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
+	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
+	aCard := mocks.NewPositionedMockCard(ctrl, deck.VictoryPoints, actions)
+
+	player.CardsByOrientation[deck.VictoryPoints] = []deck.PositionedCard{aCard}
+}
+
+func setupPlayerWithBrownAndOneTradeCard(ctrl *gomock.Controller, player *player.Player) {
+	player.ResourceHandler.AddResources(resource.GroupedResources{resource.Brown: 1})
+
+	actions := mocks.NewMockOrientationActions(ctrl)
+	actions.EXPECT().Cost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
+	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
+	aCard := mocks.NewPositionedMockCard(ctrl, deck.Trade, actions)
+
+	player.CardsByOrientation[deck.VictoryPoints] = []deck.PositionedCard{aCard}
 }

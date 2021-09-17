@@ -51,18 +51,20 @@ func (u UseResourcesStep) GetActions() []Action {
 	victoryCards := u.Phase.CurrentPlayer().CardsByOrientation[deck.VictoryPoints]
 	tradeCards := u.Phase.CurrentPlayer().CardsByOrientation[deck.Trade]
 
-	actions := createActionsFromPlayableCards(victoryCards, u.Phase)
-	actions = append(actions, createActionsFromPlayableCards(tradeCards, u.Phase)...)
+	actions := u.createActionsFromPlayableCards(victoryCards)
+
+	// TODO: check if the user has enough resources to pay the initial trade cost
+	actions = append(actions, u.createActionsFromPlayableCards(tradeCards)...)
 	actions = append(actions, &skipUseResourcesAction{u.Phase})
 
 	return actions
 }
 
-func createActionsFromPlayableCards(cards []deck.PositionedCard, phase PhaseHandler) []Action {
+func (u UseResourcesStep) createActionsFromPlayableCards(cards []deck.PositionedCard) []Action {
 	var actions []Action
 	for _, card := range cards {
-		if phase.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) {
-			actions = append(actions, &useResourcesAction{phase: phase, card: card})
+		if u.Phase.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) {
+			actions = append(actions, &useResourcesAction{phase: u.Phase, card: card})
 		}
 	}
 
@@ -75,7 +77,15 @@ type useResourcesAction struct {
 }
 
 func (u *useResourcesAction) Execute(gameState *core.GameState) error {
-	// execute card action
+	err := u.phase.CurrentPlayer().ResourceHandler.RemoveResources(u.card.Cost())
+	if err != nil {
+		return err
+	}
+
+	u.card.PerformUseResourceAction(gameState)
+
+	// stay in the use resource step in case the player wants to use more of their resource to complete goals
+	// or perform trades
 	return nil
 }
 

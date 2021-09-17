@@ -63,20 +63,6 @@ func (mr *MockCardMockRecorder) ID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ID", reflect.TypeOf((*MockCard)(nil).ID))
 }
 
-// IsOrientationValid mocks base method.
-func (m *MockCard) IsOrientationValid(arg0 deck.CardOrientation) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsOrientationValid", arg0)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsOrientationValid indicates an expected call of IsOrientationValid.
-func (mr *MockCardMockRecorder) IsOrientationValid(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsOrientationValid", reflect.TypeOf((*MockCard)(nil).IsOrientationValid), arg0)
-}
-
 // MockOrientationActions is a mock of OrientationActions interface.
 type MockOrientationActions struct {
 	ctrl     *gomock.Controller
@@ -114,28 +100,18 @@ func (mr *MockOrientationActionsMockRecorder) Cost() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cost", reflect.TypeOf((*MockOrientationActions)(nil).Cost))
 }
 
-// PerformEndRoundAction mocks base method.
-func (m *MockOrientationActions) PerformEndRoundAction(arg0 deck.Game) {
+// IsOrientationValid mocks base method.
+func (m *MockOrientationActions) IsOrientationValid(arg0 deck.Game) bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PerformEndRoundAction", arg0)
+	ret := m.ctrl.Call(m, "IsOrientationValid", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// PerformEndRoundAction indicates an expected call of PerformEndRoundAction.
-func (mr *MockOrientationActionsMockRecorder) PerformEndRoundAction(arg0 interface{}) *gomock.Call {
+// IsOrientationValid indicates an expected call of IsOrientationValid.
+func (mr *MockOrientationActionsMockRecorder) IsOrientationValid(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerformEndRoundAction", reflect.TypeOf((*MockOrientationActions)(nil).PerformEndRoundAction), arg0)
-}
-
-// PerformEndTurnAction mocks base method.
-func (m *MockOrientationActions) PerformEndTurnAction(arg0 deck.Game) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PerformEndTurnAction", arg0)
-}
-
-// PerformEndTurnAction indicates an expected call of PerformEndTurnAction.
-func (mr *MockOrientationActionsMockRecorder) PerformEndTurnAction(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerformEndTurnAction", reflect.TypeOf((*MockOrientationActions)(nil).PerformEndTurnAction), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsOrientationValid", reflect.TypeOf((*MockOrientationActions)(nil).IsOrientationValid), arg0)
 }
 
 // PerformPlayToTableaAction mocks base method.
@@ -148,4 +124,16 @@ func (m *MockOrientationActions) PerformPlayToTableaAction(arg0 deck.Game) {
 func (mr *MockOrientationActionsMockRecorder) PerformPlayToTableaAction(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerformPlayToTableaAction", reflect.TypeOf((*MockOrientationActions)(nil).PerformPlayToTableaAction), arg0)
+}
+
+// PerformUseResourceAction mocks base method.
+func (m *MockOrientationActions) PerformUseResourceAction(arg0 deck.Game) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PerformUseResourceAction", arg0)
+}
+
+// PerformUseResourceAction indicates an expected call of PerformUseResourceAction.
+func (mr *MockOrientationActionsMockRecorder) PerformUseResourceAction(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerformUseResourceAction", reflect.TypeOf((*MockOrientationActions)(nil).PerformUseResourceAction), arg0)
 }

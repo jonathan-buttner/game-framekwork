@@ -4,9 +4,9 @@ import "github.com/jonathan-buttner/game-framework/internal/resource"
 
 //go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,OrientationActions
 
+// TODO: rename
 type Card interface {
 	ID() string
-	IsOrientationValid(orientation CardOrientation) bool
 	GetOrientationActions(orientation CardOrientation) OrientationActions
 }
 
@@ -23,11 +23,16 @@ func (c Cards) AllPositionCombinations() []PositionedCard {
 	return allPositions
 }
 
+// TODO: rename
 type OrientationActions interface {
-	PerformEndRoundAction(game Game)
-	PerformEndTurnAction(game Game)
+	// TODO: should the perform action calls return errors?
+
+	// TODO: this should check that the user performing the action can pay a resource if this is the first
+	// time doing a convert resource card
+	PerformUseResourceAction(game Game)
 	PerformPlayToTableaAction(game Game)
 	Cost() resource.GroupedResources
+	IsOrientationValid(game Game) bool
 }
 
 type PositionedCard struct {
@@ -56,6 +61,7 @@ const (
 	Upgrade
 	Trade
 	Generate
+	Payment
 )
 
 func (c CardOrientation) String() string {
@@ -68,6 +74,8 @@ func (c CardOrientation) String() string {
 		return "trade"
 	case c == Generate:
 		return "generate"
+	case c == Payment:
+		return "payment"
 	default:
 		return "invalid"
 	}
@@ -78,7 +86,7 @@ var Orientations = [...]CardOrientation{
 	Upgrade,
 	Trade,
 	Generate,
+	Payment,
 }
 
-type Game interface {
-}
+type Game interface{}

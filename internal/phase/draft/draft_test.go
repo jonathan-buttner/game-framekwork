@@ -38,6 +38,7 @@ func createDeck(ctrl *gomock.Controller) *deck.Deck {
 	cardAction := mocks.NewMockOrientationActions(ctrl)
 	cardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
 	cardAction.EXPECT().Cost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
+	cardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
 
 	var cards []deck.Card
 
@@ -45,7 +46,6 @@ func createDeck(ctrl *gomock.Controller) *deck.Deck {
 		card := mocks.NewMockCard(ctrl)
 		card.EXPECT().ID().Return(fmt.Sprintf("%v", i)).AnyTimes()
 		card.EXPECT().GetOrientationActions(gomock.Any()).Return(cardAction).AnyTimes()
-		card.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
 
 		cards = append(cards, card)
 	}

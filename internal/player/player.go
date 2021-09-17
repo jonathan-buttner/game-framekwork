@@ -63,25 +63,17 @@ func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientatio
 		log.Fatalf("requested card from hand: %v does not exist to play", cardID)
 	}
 
-	if !cardFromHand.IsOrientationValid(orientation) {
+	cardWithOrientation := deck.NewPositionedCard(cardFromHand, orientation)
+
+	// TODO: this should return an error if you try to play a level 2 resource without having a level 1 resource
+	if !cardWithOrientation.IsOrientationValid(game) {
 		return fmt.Errorf("requested card orientation: %v is not valid", orientation.String())
 	}
 
-	cardWithOrientation := deck.NewPositionedCard(cardFromHand, orientation)
 	delete(p.hand, cardFromHand.ID())
 
 	p.CardsByOrientation.addCard(cardWithOrientation)
 	cardWithOrientation.PerformPlayToTableaAction(game)
-	return nil
-}
-
-func (p *Player) PerformEndRoundAction(game deck.Game, cardID string) error {
-	card, ok := p.RoundTableaCards[cardID]
-	if !ok {
-		return fmt.Errorf("requested card id: %v is not valid", cardID)
-	}
-
-	card.PerformEndRoundAction(game)
 	return nil
 }
 
