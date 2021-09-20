@@ -19,19 +19,58 @@ func NewPlayerManager(players []*player.Player) *PlayerManager {
 	return &PlayerManager{playerList, playerList.Front()}
 }
 
-type PlayersAction func(player *player.Player) error
+type ExecutionState struct {
+	CurrentPlayer *player.Player
+	NextPlayer    *player.Player
+	PrevPlayer    *player.Player
+	Position      int
+}
+
+type PlayersAction func(state ExecutionState) error
 
 func (p *PlayerManager) ExecuteForPlayers(action PlayersAction) error {
+	pos := 0
+
 	for playerElement := p.players.Front(); playerElement != nil; playerElement = playerElement.Next() {
 		playerToExecuteActionFor := playerElement.Value.(*player.Player)
 
-		err := action(playerToExecuteActionFor)
+		nextPlayer := p.getNextPlayer(playerElement)
+		prevPlayer := p.getPrevPlayer(playerElement)
+
+		err := action(ExecutionState{
+			CurrentPlayer: playerToExecuteActionFor,
+			NextPlayer:    nextPlayer,
+			PrevPlayer:    prevPlayer,
+			Position:      pos,
+		})
 		if err != nil {
 			return err
 		}
+
+		pos++
 	}
 
 	return nil
+}
+
+func (p *PlayerManager) getNextPlayer(playerElement *list.Element) *player.Player {
+	nextPlayerElement := playerElement.Next()
+	if nextPlayerElement == nil {
+		// this means we're at the back of the list, so wrap around and get the first player
+		return p.players.Front().Value.(*player.Player)
+	}
+
+	return nextPlayerElement.Value.(*player.Player)
+}
+
+func (p *PlayerManager) getPrevPlayer(playerElement *list.Element) *player.Player {
+	prevPlayerElement := playerElement.Prev()
+	if prevPlayerElement == nil {
+		// this means we're at the front of the list, so wrap around and get the laster player
+		return p.players.Back().Value.(*player.Player)
+	}
+
+	return prevPlayerElement.Value.(*player.Player)
 }
 
 func (p *PlayerManager) CurrentPlayer() *player.Player {
@@ -53,7 +92,7 @@ func (p *PlayerManager) NextPlayer() {
 	}
 }
 
-func (p *PlayerManager) NextStartPlayerAndReset() {
+func (p *PlayerManager) RotateStartPlayer() {
 	p.players.MoveToBack(p.players.Front())
 	p.currentPlayerElement = p.players.Front()
 }

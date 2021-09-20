@@ -3,6 +3,7 @@ package deck
 import "github.com/jonathan-buttner/game-framework/internal/resource"
 
 //go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,OrientationActions
+//go:generate stringer -type=CardOrientation
 
 // TODO: rename
 type Card interface {
@@ -63,23 +64,6 @@ const (
 	Generate
 	Payment
 )
-
-func (c CardOrientation) String() string {
-	switch {
-	case c == VictoryPoints:
-		return "victory points"
-	case c == Upgrade:
-		return "upgrade"
-	case c == Trade:
-		return "trade"
-	case c == Generate:
-		return "generate"
-	case c == Payment:
-		return "payment"
-	default:
-		return "invalid"
-	}
-}
 
 var Orientations = [...]CardOrientation{
 	VictoryPoints,

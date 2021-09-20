@@ -68,7 +68,7 @@ func (c *cardStack) Shuffle() {
 }
 
 func newCardStack(cards []Card) *cardStack {
-	// maybe move this out?
+	// TODO: move this out?
 	rand.Seed(time.Now().UnixNano())
 
 	convertCards := make([]interface{}, len(cards))

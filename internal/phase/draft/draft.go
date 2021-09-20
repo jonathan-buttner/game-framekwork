@@ -6,8 +6,9 @@ import (
 	"github.com/jonathan-buttner/game-framework/internal/core"
 	"github.com/jonathan-buttner/game-framework/internal/deck"
 	"github.com/jonathan-buttner/game-framework/internal/phase"
-	"github.com/jonathan-buttner/game-framework/internal/player"
 )
+
+//go:generate mockgen -destination=../../../mocks/mock_draft.go -package=mocks github.com/jonathan-buttner/game-framework/internal/phase/draft Deck
 
 /**
 States:
@@ -21,22 +22,30 @@ Switch hands
 Repeat
 */
 
+type Deck interface {
+	Shuffle()
+	DealCards(handSize int, player deck.Player)
+}
+
 type Draft struct {
 	phase.Phase
-	deck             *deck.Deck
+	deck             Deck
 	startingHandSize int
 }
 
-func NewDraftPhase(phase phase.Phase, deck *deck.Deck, startingHandSize int) *Draft {
-	return &Draft{Phase: phase, deck: deck, startingHandSize: startingHandSize}
+func NewDraftPhase(phase phase.Phase, deck Deck, startingHandSize int) *Draft {
+	draftPhase := &Draft{Phase: phase, deck: deck, startingHandSize: startingHandSize}
+	draftPhase.setup()
+
+	return draftPhase
 }
 
-func (d *Draft) Setup() {
+func (d *Draft) setup() {
 	d.deck.Shuffle()
 
 	// deal 5 cards to each player
-	d.PlayerManager.ExecuteForPlayers(func(player *player.Player) error {
-		d.deck.DealCards(d.startingHandSize, player)
+	d.PlayerManager.ExecuteForPlayers(func(state phase.ExecutionState) error {
+		d.deck.DealCards(d.startingHandSize, state.CurrentPlayer)
 		return nil
 	})
 
@@ -52,16 +61,33 @@ func (d *Draft) PerformAction(action phase.Action) {
 	if err != nil {
 		panic(fmt.Errorf("executing action failed err: %v", err))
 	}
-
-	// if d.PlayerManager.CurrentPlayer().ResourceCountExceedsLimit() {
-	// 	d.step = phase.NewReduceResourcesStep(d.PlayerManager.CurrentPlayer())
-	// } else {
-	// 	d.PlayerManager.NextPlayer()
-	// 	d.step = chooseCardStep{d}
-	// }
 }
 
 func (d *Draft) NextPlayer() {
+	if d.PlayerManager.HasMorePlayers() {
+		d.PlayerManager.NextPlayer()
+	} else {
+		d.rotateHands()
+		d.PlayerManager.RotateStartPlayer()
+	}
+
+	d.Step = chooseCardStep{d}
+}
+
+func (d *Draft) rotateHands() {
+	var hand []deck.Card
+
+	d.PlayerManager.ExecuteForPlayers(func(state phase.ExecutionState) error {
+		if hand != nil {
+			tempHand := state.CurrentPlayer.GetHand()
+			state.CurrentPlayer.SetHand(hand)
+			hand = tempHand
+		} else {
+			hand = state.CurrentPlayer.GetHand()
+			state.CurrentPlayer.SetHand(state.PrevPlayer.GetHand())
+		}
+		return nil
+	})
 }
 
 type chooseCardStep struct {
@@ -82,7 +108,8 @@ func (c chooseCardStep) GetActions() []phase.Action {
 }
 
 func (c chooseCardStep) isChoosableCard(card deck.PositionedCard) bool {
-	return c.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) && card.IsOrientationValid(c.draft.GameState)
+	return c.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) &&
+		card.IsOrientationValid(c.draft.GameState)
 }
 
 type chooseCardAction struct {
