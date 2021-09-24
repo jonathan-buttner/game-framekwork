@@ -58,16 +58,19 @@ func TestRotateHands(t *testing.T) {
 	assert.Equal(t, "0", players[1].GetHand()[0].ID())
 }
 
-func TestCompleteDraftCardsPhase(t *testing.T) {
+func TestDraftASingleCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	tester := DraftTester{
+	tester := DraftTestCreator{
 		Player1: PlayerInfo{
 			Name:      "player1",
 			Resources: resource.GroupedResources{resource.Brown: 12},
 			HandSetup: []CardInfo{
 				{
-					Cost: resource.GroupedResources{resource.Brown: 1},
+					UseCost:     resource.GroupedResources{resource.Brown: 1},
+					AcquireCost: resource.GroupedResources{resource.Brown: 1},
+					Orientation: deck.Trade,
+					Name:        "player1-Trade-1Brown",
 				},
 			},
 		},
@@ -76,21 +79,60 @@ func TestCompleteDraftCardsPhase(t *testing.T) {
 			Resources: resource.GroupedResources{resource.Brown: 1},
 			HandSetup: []CardInfo{
 				{
-					Cost: resource.GroupedResources{resource.Brown: 1},
+					UseCost:     resource.GroupedResources{resource.Brown: 1},
+					AcquireCost: resource.GroupedResources{resource.Brown: 1},
+					Orientation: deck.Trade,
+					Name:        "player2-Trade-1Brown",
 				},
 			},
 		},
 	}
 
 	draftTest := tester.Create(ctrl)
-	for actions := draftTest.Draft.GetActions(); len(actions) > 0; {
-		fmt.Println("executing action")
-		actions[0].Execute(&core.GameState{})
+	draftTest.ExecuteChooseCard(0)
+
+	_, hasPlayer1Card := draftTest.Player1.RoundTableaCards["player1-Trade-1Brown"]
+	assert.True(t, hasPlayer1Card)
+}
+
+func TestSecondPlayerDraftCard(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	testCreator := DraftTestCreator{
+		Player1: PlayerInfo{
+			Name:      "player1",
+			Resources: resource.GroupedResources{resource.Brown: 2},
+			HandSetup: []CardInfo{
+				{
+					UseCost:     resource.GroupedResources{resource.Brown: 1},
+					AcquireCost: resource.GroupedResources{resource.Brown: 1},
+					Orientation: deck.Trade,
+					Name:        "player1-Trade-1Brown",
+				},
+			},
+		},
+		Player2: PlayerInfo{
+			Name:      "player2",
+			Resources: resource.GroupedResources{resource.Brown: 1},
+			HandSetup: []CardInfo{
+				{
+					UseCost:     resource.GroupedResources{resource.Brown: 1},
+					AcquireCost: resource.GroupedResources{resource.Brown: 1},
+					Orientation: deck.Trade,
+					Name:        "player2-Trade-1Brown",
+				},
+			},
+		},
 	}
 
-	fmt.Printf("tablea cards %v", draftTest.Player1.RoundTableaCards)
-	_, hasPlayer1Card := draftTest.Player1.RoundTableaCards["player1-0"]
-	assert.True(t, hasPlayer1Card)
+	draftTest := testCreator.Create(ctrl)
+	draftTest.ExecuteChooseCard(0)
+	draftTest.ExecuteSkipUseResources()
+
+	draftTest.ExecuteChooseCard(0)
+
+	_, hasPlayer2Card := draftTest.Player2.RoundTableaCards["player2-Trade-1Brown"]
+	assert.True(t, hasPlayer2Card)
 }
 
 type DraftTest struct {
@@ -99,12 +141,22 @@ type DraftTest struct {
 	Draft   *draft.Draft
 }
 
-type DraftTester struct {
+func (d DraftTest) ExecuteChooseCard(index int) {
+	actions := d.Draft.GetActionsHandler()
+	actions.Actions[phase.ChooseCard][index].Execute(&core.GameState{})
+}
+
+func (d DraftTest) ExecuteSkipUseResources() {
+	actions := d.Draft.GetActionsHandler()
+	actions.Actions[phase.SkipUseResources][0].Execute(&core.GameState{})
+}
+
+type DraftTestCreator struct {
 	Player1 PlayerInfo
 	Player2 PlayerInfo
 }
 
-func (d DraftTester) Create(ctrl *gomock.Controller) DraftTest {
+func (d DraftTestCreator) Create(ctrl *gomock.Controller) DraftTest {
 	p1HandSize := len(d.Player1.HandSetup)
 	p2HandSize := len(d.Player2.HandSetup)
 
@@ -135,28 +187,45 @@ func (p *PlayerInfo) Create(ctrl *gomock.Controller) (*player.Player, []deck.Car
 	playerInfo.ResourceHandler.AddResources(p.Resources)
 
 	var cards []deck.Card
-	for i, card := range p.HandSetup {
-		cards = append(cards, card.Create(fmt.Sprintf("%v-%v", p.Name, i), ctrl))
+	for _, card := range p.HandSetup {
+		cards = append(cards, card.Create(ctrl))
 	}
 
 	return playerInfo, cards
 }
 
 type CardInfo struct {
-	Cost resource.GroupedResources
+	UseCost     resource.GroupedResources
+	AcquireCost resource.GroupedResources
+	Orientation deck.CardOrientation
+	Name        string
 }
 
-func (c CardInfo) Create(name string, ctrl *gomock.Controller) *mocks.MockCard {
-	cardAction := mocks.NewMockOrientationActions(ctrl)
-	cardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
-	cardAction.EXPECT().Cost().Return(c.Cost).AnyTimes()
-	cardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
+func (c CardInfo) Create(ctrl *gomock.Controller) *mocks.MockCard {
+	validCardAction := mocks.NewMockOrientationActions(ctrl)
+	validCardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
+	validCardAction.EXPECT().UseCost().Return(c.UseCost).AnyTimes()
+	validCardAction.EXPECT().AcquireCost().Return(c.AcquireCost).AnyTimes()
+	validCardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
+	validCardAction.EXPECT().PerformUseResourceAction(gomock.Any()).Do(func(_ *core.GameState) {
+		// TODO: reduce resources for the player here
+	}).AnyTimes()
+
+	invalidCardAction := mocks.NewMockOrientationActions(ctrl)
+	invalidCardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
+	invalidCardAction.EXPECT().UseCost().Return(c.UseCost).AnyTimes()
+	invalidCardAction.EXPECT().AcquireCost().Return(c.AcquireCost).AnyTimes()
+	invalidCardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(false).AnyTimes()
 
 	card := mocks.NewMockCard(ctrl)
-	card.EXPECT().ID().Return(name).AnyTimes()
+	card.EXPECT().ID().Return(c.Name).AnyTimes()
 
-	// TODO: only return the valid orientations here
-	card.EXPECT().GetOrientationActions(gomock.Any()).Return(cardAction).AnyTimes()
+	card.EXPECT().GetOrientationActions(gomock.Any()).DoAndReturn(func(orientation deck.CardOrientation) deck.OrientationActions {
+		if orientation == c.Orientation {
+			return validCardAction
+		}
+		return invalidCardAction
+	}).AnyTimes()
 
 	return card
 }
@@ -172,7 +241,8 @@ func newDraftPhase(ctrl *gomock.Controller, numCardsToDeal int) (*draft.Draft, [
 func createDeck(ctrl *gomock.Controller, numCardToDeal int, numberOfPlayers int) draft.Deck {
 	cardAction := mocks.NewMockOrientationActions(ctrl)
 	cardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
-	cardAction.EXPECT().Cost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
+	cardAction.EXPECT().UseCost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
+	cardAction.EXPECT().AcquireCost().Return(resource.GroupedResources{resource.Yellow: 1}).AnyTimes()
 	cardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
 
 	var cards []deck.Card

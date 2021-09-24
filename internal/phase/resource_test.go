@@ -123,7 +123,7 @@ func setupPlayerWithBrownAndOneVictoryCard(ctrl *gomock.Controller, player *play
 	player.ResourceHandler.AddResources(resource.GroupedResources{resource.Brown: 1})
 
 	actions := mocks.NewMockOrientationActions(ctrl)
-	actions.EXPECT().Cost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
+	actions.EXPECT().UseCost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
 	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
 	aCard := mocks.NewPositionedMockCard(ctrl, deck.VictoryPoints, actions)
 
@@ -134,7 +134,7 @@ func setupPlayerWithBrownAndOneTradeCard(ctrl *gomock.Controller, player *player
 	player.ResourceHandler.AddResources(resource.GroupedResources{resource.Brown: 1})
 
 	actions := mocks.NewMockOrientationActions(ctrl)
-	actions.EXPECT().Cost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
+	actions.EXPECT().UseCost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
 	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
 	aCard := mocks.NewPositionedMockCard(ctrl, deck.Trade, actions)
 

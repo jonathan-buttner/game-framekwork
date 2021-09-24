@@ -86,18 +86,18 @@ func (m *MockOrientationActions) EXPECT() *MockOrientationActionsMockRecorder {
 	return m.recorder
 }
 
-// Cost mocks base method.
-func (m *MockOrientationActions) Cost() resource.GroupedResources {
+// AcquireCost mocks base method.
+func (m *MockOrientationActions) AcquireCost() resource.GroupedResources {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Cost")
+	ret := m.ctrl.Call(m, "AcquireCost")
 	ret0, _ := ret[0].(resource.GroupedResources)
 	return ret0
 }
 
-// Cost indicates an expected call of Cost.
-func (mr *MockOrientationActionsMockRecorder) Cost() *gomock.Call {
+// AcquireCost indicates an expected call of AcquireCost.
+func (mr *MockOrientationActionsMockRecorder) AcquireCost() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cost", reflect.TypeOf((*MockOrientationActions)(nil).Cost))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AcquireCost", reflect.TypeOf((*MockOrientationActions)(nil).AcquireCost))
 }
 
 // IsOrientationValid mocks base method.
@@ -136,4 +136,18 @@ func (m *MockOrientationActions) PerformUseResourceAction(arg0 deck.Game) {
 func (mr *MockOrientationActionsMockRecorder) PerformUseResourceAction(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerformUseResourceAction", reflect.TypeOf((*MockOrientationActions)(nil).PerformUseResourceAction), arg0)
+}
+
+// UseCost mocks base method.
+func (m *MockOrientationActions) UseCost() resource.GroupedResources {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UseCost")
+	ret0, _ := ret[0].(resource.GroupedResources)
+	return ret0
+}
+
+// UseCost indicates an expected call of UseCost.
+func (mr *MockOrientationActionsMockRecorder) UseCost() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UseCost", reflect.TypeOf((*MockOrientationActions)(nil).UseCost))
 }

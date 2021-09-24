@@ -58,7 +58,6 @@ func (p *Player) GetHand() deck.Cards {
 }
 
 func (p *Player) PlayCardFromHand(cardID string, orientation deck.CardOrientation, game deck.Game) error {
-	fmt.Printf("player: %v hand: %v", p.Name, p.hand)
 	cardFromHand, ok := p.hand[cardID]
 	if !ok {
 		log.Fatalf("requested card from hand: %v does not exist to play", cardID)

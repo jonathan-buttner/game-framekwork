@@ -1,6 +1,8 @@
 package phase
 
 import (
+	"fmt"
+
 	"github.com/jonathan-buttner/game-framework/internal/core"
 	"github.com/jonathan-buttner/game-framework/internal/deck"
 	"github.com/jonathan-buttner/game-framework/internal/resource"
@@ -19,7 +21,7 @@ func (r ReduceResourcesStep) GetActions() []Action {
 
 	for resType, count := range r.Phase.CurrentPlayer().ResourceHandler.Resources {
 		if count > 0 {
-			actions = append(actions, &reduceResourcesAction{phase: r.Phase, resourceType: resType})
+			actions = append(actions, reduceResourcesAction{phase: r.Phase, resourceType: resType})
 		}
 	}
 
@@ -31,7 +33,7 @@ type reduceResourcesAction struct {
 	resourceType resource.ResourceType
 }
 
-func (r *reduceResourcesAction) Execute(gameState *core.GameState) error {
+func (r reduceResourcesAction) Execute(gameState *core.GameState) error {
 	err := r.phase.CurrentPlayer().ResourceHandler.RemoveResources(resource.GroupedResources{r.resourceType: 1})
 
 	if r.phase.CurrentPlayer().ResourceCountExceedsLimit() {
@@ -41,6 +43,14 @@ func (r *reduceResourcesAction) Execute(gameState *core.GameState) error {
 	}
 
 	return err
+}
+
+func (r reduceResourcesAction) String() string {
+	return fmt.Sprintf("%v type: %v", r.Type().String(), r.resourceType.String())
+}
+
+func (r reduceResourcesAction) Type() ActionType {
+	return ReduceResources
 }
 
 type UseResourcesStep struct {
@@ -55,7 +65,7 @@ func (u UseResourcesStep) GetActions() []Action {
 
 	// TODO: check if the user has enough resources to pay the initial trade cost
 	actions = append(actions, u.createActionsFromPlayableCards(tradeCards)...)
-	actions = append(actions, &skipUseResourcesAction{u.Phase})
+	actions = append(actions, skipUseResourcesAction{u.Phase})
 
 	return actions
 }
@@ -63,8 +73,8 @@ func (u UseResourcesStep) GetActions() []Action {
 func (u UseResourcesStep) createActionsFromPlayableCards(cards []deck.PositionedCard) []Action {
 	var actions []Action
 	for _, card := range cards {
-		if u.Phase.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) {
-			actions = append(actions, &useResourcesAction{phase: u.Phase, card: card})
+		if u.Phase.CurrentPlayer().ResourceHandler.HasResources(card.UseCost()) {
+			actions = append(actions, useResourcesAction{phase: u.Phase, card: card})
 		}
 	}
 
@@ -76,8 +86,8 @@ type useResourcesAction struct {
 	card  deck.PositionedCard
 }
 
-func (u *useResourcesAction) Execute(gameState *core.GameState) error {
-	err := u.phase.CurrentPlayer().ResourceHandler.RemoveResources(u.card.Cost())
+func (u useResourcesAction) Execute(gameState *core.GameState) error {
+	err := u.phase.CurrentPlayer().ResourceHandler.RemoveResources(u.card.UseCost())
 	if err != nil {
 		return err
 	}
@@ -89,11 +99,19 @@ func (u *useResourcesAction) Execute(gameState *core.GameState) error {
 	return nil
 }
 
+func (u useResourcesAction) String() string {
+	return fmt.Sprintf("%v card: %v, cost: %v", u.Type().String(), u.card.String(), u.card.UseCost())
+}
+
+func (u useResourcesAction) Type() ActionType {
+	return UseResources
+}
+
 type skipUseResourcesAction struct {
 	phase PhaseHandler
 }
 
-func (s *skipUseResourcesAction) Execute(gameState *core.GameState) error {
+func (s skipUseResourcesAction) Execute(gameState *core.GameState) error {
 	if s.phase.CurrentPlayer().ResourceCountExceedsLimit() {
 		s.phase.SetStep(NewReduceResourcesStep(s.phase))
 	} else {
@@ -101,4 +119,12 @@ func (s *skipUseResourcesAction) Execute(gameState *core.GameState) error {
 	}
 
 	return nil
+}
+
+func (s skipUseResourcesAction) String() string {
+	return s.Type().String()
+}
+
+func (s skipUseResourcesAction) Type() ActionType {
+	return SkipUseResources
 }

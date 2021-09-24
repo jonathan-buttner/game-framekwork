@@ -56,6 +56,10 @@ func (d *Draft) GetActions() []phase.Action {
 	return d.Step.GetActions()
 }
 
+func (d *Draft) GetActionsHandler() phase.ActionsHandler {
+	return phase.NewActionsHandler(d.GetActions())
+}
+
 func (d *Draft) PerformAction(action phase.Action) {
 	err := action.Execute(d.GameState)
 	if err != nil {
@@ -100,7 +104,7 @@ func (c chooseCardStep) GetActions() []phase.Action {
 	var actions []phase.Action
 	for _, cardWithPosition := range cardsInHandWithPositions {
 		if c.isChoosableCard(cardWithPosition) {
-			actions = append(actions, &chooseCardAction{draft: c.draft, card: cardWithPosition})
+			actions = append(actions, chooseCardAction{draft: c.draft, card: cardWithPosition})
 		}
 	}
 
@@ -108,8 +112,10 @@ func (c chooseCardStep) GetActions() []phase.Action {
 }
 
 func (c chooseCardStep) isChoosableCard(card deck.PositionedCard) bool {
-	return c.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(card.Cost()) &&
-		card.IsOrientationValid(c.draft.GameState)
+	return card.IsOrientationValid(c.draft.GameState)
+
+	// TODO: is orientation valid can check if the player has the correct resources
+	// c.draft.PlayerManager.CurrentPlayer().ResourceHandler.HasResources(card.UseCost())
 }
 
 type chooseCardAction struct {
@@ -117,9 +123,17 @@ type chooseCardAction struct {
 	card  deck.PositionedCard
 }
 
-func (c *chooseCardAction) Execute(gameState *core.GameState) error {
+func (c chooseCardAction) Execute(gameState *core.GameState) error {
 	err := c.draft.PlayerManager.CurrentPlayer().PlayCardFromHand(c.card.ID(), c.card.Orientation, gameState)
 	c.draft.SetStep(phase.UseResourcesStep{Phase: c.draft})
 
 	return err
+}
+
+func (c chooseCardAction) String() string {
+	return fmt.Sprintf("%v: %v", c.Type().String(), c.card.String())
+}
+
+func (c chooseCardAction) Type() phase.ActionType {
+	return phase.ChooseCard
 }

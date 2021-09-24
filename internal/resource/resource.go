@@ -2,6 +2,8 @@ package resource
 
 import "fmt"
 
+//go:generate stringer -type=ResourceType
+
 type ResourceType int
 
 const (

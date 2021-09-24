@@ -1,6 +1,10 @@
 package deck
 
-import "github.com/jonathan-buttner/game-framework/internal/resource"
+import (
+	"fmt"
+
+	"github.com/jonathan-buttner/game-framework/internal/resource"
+)
 
 //go:generate mockgen -destination=../../mocks/mock_card.go -package=mocks github.com/jonathan-buttner/game-framework/internal/deck Card,OrientationActions
 //go:generate stringer -type=CardOrientation
@@ -32,7 +36,8 @@ type OrientationActions interface {
 	// time doing a convert resource card
 	PerformUseResourceAction(game Game)
 	PerformPlayToTableaAction(game Game)
-	Cost() resource.GroupedResources
+	UseCost() resource.GroupedResources
+	AcquireCost() resource.GroupedResources
 	IsOrientationValid(game Game) bool
 }
 
@@ -45,6 +50,10 @@ type PositionedCard struct {
 
 func NewPositionedCard(card Card, orientation CardOrientation) PositionedCard {
 	return PositionedCard{card, card.GetOrientationActions(orientation), orientation}
+}
+
+func (p PositionedCard) String() string {
+	return fmt.Sprintf("%v[%v]", p.ID(), p.Orientation.String())
 }
 
 type NamedCard struct {
