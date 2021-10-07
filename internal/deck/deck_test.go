@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/jonathan-buttner/game-framework/internal/deck"
-	"github.com/jonathan-buttner/game-framework/mocks"
+	"github.com/jonathan-buttner/game-framework/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +45,6 @@ func TestEmptiesDeck(t *testing.T) {
 	d := deck.NewDeck(cards)
 	d.DealCards(1, p)
 	assert.Equal(t, d.Size(), 0)
-
 }
 
 func TestSetsMultiplePlayerWithOneCard(t *testing.T) {

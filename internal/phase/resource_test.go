@@ -10,7 +10,8 @@ import (
 	"github.com/jonathan-buttner/game-framework/internal/player"
 	"github.com/jonathan-buttner/game-framework/internal/resource"
 	"github.com/jonathan-buttner/game-framework/internal/rules"
-	"github.com/jonathan-buttner/game-framework/mocks"
+	"github.com/jonathan-buttner/game-framework/test"
+	"github.com/jonathan-buttner/game-framework/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,7 +126,7 @@ func setupPlayerWithBrownAndOneVictoryCard(ctrl *gomock.Controller, player *play
 	actions := mocks.NewMockOrientationActions(ctrl)
 	actions.EXPECT().UseCost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
 	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
-	aCard := mocks.NewPositionedMockCard(ctrl, deck.VictoryPoints, actions)
+	aCard := test.NewPositionedMockCard(ctrl, deck.VictoryPoints, actions)
 
 	player.CardsByOrientation[deck.VictoryPoints] = []deck.PositionedCard{aCard}
 }
@@ -136,7 +137,7 @@ func setupPlayerWithBrownAndOneTradeCard(ctrl *gomock.Controller, player *player
 	actions := mocks.NewMockOrientationActions(ctrl)
 	actions.EXPECT().UseCost().Return(resource.GroupedResources{resource.Brown: 1}).AnyTimes()
 	actions.EXPECT().PerformUseResourceAction(gomock.Any()).Times(1)
-	aCard := mocks.NewPositionedMockCard(ctrl, deck.Trade, actions)
+	aCard := test.NewPositionedMockCard(ctrl, deck.Trade, actions)
 
 	player.CardsByOrientation[deck.VictoryPoints] = []deck.PositionedCard{aCard}
 }

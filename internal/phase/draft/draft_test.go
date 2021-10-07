@@ -12,7 +12,8 @@ import (
 	"github.com/jonathan-buttner/game-framework/internal/player"
 	"github.com/jonathan-buttner/game-framework/internal/resource"
 	"github.com/jonathan-buttner/game-framework/internal/rules"
-	"github.com/jonathan-buttner/game-framework/mocks"
+	"github.com/jonathan-buttner/game-framework/test"
+	"github.com/jonathan-buttner/game-framework/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,11 +62,11 @@ func TestRotateHands(t *testing.T) {
 func TestDraftASingleCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	tester := DraftTestCreator{
-		Player1: PlayerInfo{
+	tester := test.DraftTestCreator{
+		Player1: test.PlayerInfo{
 			Name:      "player1",
 			Resources: resource.GroupedResources{resource.Brown: 12},
-			HandSetup: []CardInfo{
+			HandSetup: []test.CardInfo{
 				{
 					UseCost:     resource.GroupedResources{resource.Brown: 1},
 					AcquireCost: resource.GroupedResources{resource.Brown: 1},
@@ -74,10 +75,10 @@ func TestDraftASingleCard(t *testing.T) {
 				},
 			},
 		},
-		Player2: PlayerInfo{
+		Player2: test.PlayerInfo{
 			Name:      "player2",
 			Resources: resource.GroupedResources{resource.Brown: 1},
-			HandSetup: []CardInfo{
+			HandSetup: []test.CardInfo{
 				{
 					UseCost:     resource.GroupedResources{resource.Brown: 1},
 					AcquireCost: resource.GroupedResources{resource.Brown: 1},
@@ -89,7 +90,7 @@ func TestDraftASingleCard(t *testing.T) {
 	}
 
 	draftTest := tester.Create(ctrl)
-	draftTest.ExecuteChooseCard(0)
+	draftTest.ExecuteChooseCardByID("player1-Trade-1Brown")
 
 	_, hasPlayer1Card := draftTest.Player1.RoundTableaCards["player1-Trade-1Brown"]
 	assert.True(t, hasPlayer1Card)
@@ -98,11 +99,11 @@ func TestDraftASingleCard(t *testing.T) {
 func TestSecondPlayerDraftCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	testCreator := DraftTestCreator{
-		Player1: PlayerInfo{
+	testCreator := test.DraftTestCreator{
+		Player1: test.PlayerInfo{
 			Name:      "player1",
 			Resources: resource.GroupedResources{resource.Brown: 2},
-			HandSetup: []CardInfo{
+			HandSetup: []test.CardInfo{
 				{
 					UseCost:     resource.GroupedResources{resource.Brown: 1},
 					AcquireCost: resource.GroupedResources{resource.Brown: 1},
@@ -111,10 +112,10 @@ func TestSecondPlayerDraftCard(t *testing.T) {
 				},
 			},
 		},
-		Player2: PlayerInfo{
+		Player2: test.PlayerInfo{
 			Name:      "player2",
 			Resources: resource.GroupedResources{resource.Brown: 1},
-			HandSetup: []CardInfo{
+			HandSetup: []test.CardInfo{
 				{
 					UseCost:     resource.GroupedResources{resource.Brown: 1},
 					AcquireCost: resource.GroupedResources{resource.Brown: 1},
@@ -126,108 +127,13 @@ func TestSecondPlayerDraftCard(t *testing.T) {
 	}
 
 	draftTest := testCreator.Create(ctrl)
-	draftTest.ExecuteChooseCard(0)
+	draftTest.ExecuteChooseCardByID("player1-Trade-1Brown")
 	draftTest.ExecuteSkipUseResources()
 
-	draftTest.ExecuteChooseCard(0)
+	draftTest.ExecuteChooseCardByID("player2-Trade-1Brown")
 
 	_, hasPlayer2Card := draftTest.Player2.RoundTableaCards["player2-Trade-1Brown"]
 	assert.True(t, hasPlayer2Card)
-}
-
-type DraftTest struct {
-	Player1 *player.Player
-	Player2 *player.Player
-	Draft   *draft.Draft
-}
-
-func (d DraftTest) ExecuteChooseCard(index int) {
-	actions := d.Draft.GetActionsHandler()
-	actions.Actions[phase.ChooseCard][index].Execute(&core.GameState{})
-}
-
-func (d DraftTest) ExecuteSkipUseResources() {
-	actions := d.Draft.GetActionsHandler()
-	actions.Actions[phase.SkipUseResources][0].Execute(&core.GameState{})
-}
-
-type DraftTestCreator struct {
-	Player1 PlayerInfo
-	Player2 PlayerInfo
-}
-
-func (d DraftTestCreator) Create(ctrl *gomock.Controller) DraftTest {
-	p1HandSize := len(d.Player1.HandSetup)
-	p2HandSize := len(d.Player2.HandSetup)
-
-	if p1HandSize != p2HandSize {
-		panic(fmt.Sprintf("player cards must be the same length, p1: %v, p2: %v", p1HandSize, p2HandSize))
-	}
-
-	player1, p1Cards := d.Player1.Create(ctrl)
-	player2, p2Cards := d.Player2.Create(ctrl)
-
-	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
-	phase := phase.Phase{PlayerManager: manager, GameState: &core.GameState{}}
-
-	deck := mocks.NewMockDeckWithoutShuffle(ctrl, append(p2Cards, p1Cards...))
-	draftPhase := draft.NewDraftPhase(phase, deck, len(p1Cards))
-
-	return DraftTest{Player1: player1, Player2: player2, Draft: draftPhase}
-}
-
-type PlayerInfo struct {
-	Name      string
-	Resources resource.GroupedResources
-	HandSetup []CardInfo
-}
-
-func (p *PlayerInfo) Create(ctrl *gomock.Controller) (*player.Player, []deck.Card) {
-	playerInfo := player.NewPlayer(p.Name, rules.NewDefaultGameRules())
-	playerInfo.ResourceHandler.AddResources(p.Resources)
-
-	var cards []deck.Card
-	for _, card := range p.HandSetup {
-		cards = append(cards, card.Create(ctrl))
-	}
-
-	return playerInfo, cards
-}
-
-type CardInfo struct {
-	UseCost     resource.GroupedResources
-	AcquireCost resource.GroupedResources
-	Orientation deck.CardOrientation
-	Name        string
-}
-
-func (c CardInfo) Create(ctrl *gomock.Controller) *mocks.MockCard {
-	validCardAction := mocks.NewMockOrientationActions(ctrl)
-	validCardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
-	validCardAction.EXPECT().UseCost().Return(c.UseCost).AnyTimes()
-	validCardAction.EXPECT().AcquireCost().Return(c.AcquireCost).AnyTimes()
-	validCardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(true).AnyTimes()
-	validCardAction.EXPECT().PerformUseResourceAction(gomock.Any()).Do(func(_ *core.GameState) {
-		// TODO: reduce resources for the player here
-	}).AnyTimes()
-
-	invalidCardAction := mocks.NewMockOrientationActions(ctrl)
-	invalidCardAction.EXPECT().PerformPlayToTableaAction(gomock.Any()).AnyTimes()
-	invalidCardAction.EXPECT().UseCost().Return(c.UseCost).AnyTimes()
-	invalidCardAction.EXPECT().AcquireCost().Return(c.AcquireCost).AnyTimes()
-	invalidCardAction.EXPECT().IsOrientationValid(gomock.Any()).Return(false).AnyTimes()
-
-	card := mocks.NewMockCard(ctrl)
-	card.EXPECT().ID().Return(c.Name).AnyTimes()
-
-	card.EXPECT().GetOrientationActions(gomock.Any()).DoAndReturn(func(orientation deck.CardOrientation) deck.OrientationActions {
-		if orientation == c.Orientation {
-			return validCardAction
-		}
-		return invalidCardAction
-	}).AnyTimes()
-
-	return card
 }
 
 func newDraftPhase(ctrl *gomock.Controller, numCardsToDeal int) (*draft.Draft, []*player.Player) {
@@ -255,7 +161,7 @@ func createDeck(ctrl *gomock.Controller, numCardToDeal int, numberOfPlayers int)
 		cards = append(cards, card)
 	}
 
-	return mocks.NewMockDeckWithoutShuffle(ctrl, cards)
+	return test.NewMockDeckWithoutShuffle(ctrl, cards)
 }
 
 func createBasePhase() (phase.Phase, []*player.Player) {

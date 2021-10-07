@@ -53,6 +53,10 @@ func (r reduceResourcesAction) Type() ActionType {
 	return ReduceResources
 }
 
+func (r reduceResourcesAction) ID() string {
+	return r.resourceType.String()
+}
+
 type UseResourcesStep struct {
 	Phase PhaseHandler
 }
@@ -107,6 +111,10 @@ func (u useResourcesAction) Type() ActionType {
 	return UseResources
 }
 
+func (u useResourcesAction) ID() string {
+	return u.card.ID()
+}
+
 type skipUseResourcesAction struct {
 	phase PhaseHandler
 }
@@ -127,4 +135,8 @@ func (s skipUseResourcesAction) String() string {
 
 func (s skipUseResourcesAction) Type() ActionType {
 	return SkipUseResources
+}
+
+func (s skipUseResourcesAction) ID() string {
+	return s.Type().String()
 }

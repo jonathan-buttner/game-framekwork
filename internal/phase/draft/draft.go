@@ -137,3 +137,7 @@ func (c chooseCardAction) String() string {
 func (c chooseCardAction) Type() phase.ActionType {
 	return phase.ChooseCard
 }
+
+func (c chooseCardAction) ID() string {
+	return c.card.ID()
+}

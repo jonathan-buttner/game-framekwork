@@ -18,6 +18,7 @@ type Action interface {
 	fmt.Stringer
 	Execute(gameState *core.GameState) error
 	Type() ActionType
+	ID() string
 }
 
 type ActionType int
@@ -29,13 +30,33 @@ const (
 	SkipUseResources
 )
 
-type ActionsHandler struct {
-	DetailedActions map[ActionType]map[string]Action
-	Actions         map[ActionType][]Action
-}
+type (
+	ActionsByType  map[ActionType][]Action
+	ActionsHandler struct {
+		DetailedActions map[ActionType]map[string]Action
+		Actions         ActionsByType
+	}
+)
 
 func NewActionsHandler(actions []Action) ActionsHandler {
-	actionsMap := make(map[ActionType][]Action)
+	actionsMap := getActionsByType(actions)
+
+	detailedActions := make(map[ActionType]map[string]Action)
+	for _, action := range actions {
+		stringToAction, ok := detailedActions[action.Type()]
+
+		if ok {
+			stringToAction[action.ID()] = action
+		} else {
+			detailedActions[action.Type()] = map[string]Action{action.ID(): action}
+		}
+	}
+
+	return ActionsHandler{DetailedActions: detailedActions, Actions: actionsMap}
+}
+
+func getActionsByType(actions []Action) ActionsByType {
+	actionsMap := make(ActionsByType)
 
 	for _, action := range actions {
 		actionsArray, ok := actionsMap[action.Type()]
@@ -46,18 +67,7 @@ func NewActionsHandler(actions []Action) ActionsHandler {
 		}
 	}
 
-	detailedActions := make(map[ActionType]map[string]Action)
-	for _, action := range actions {
-		stringToAction, ok := detailedActions[action.Type()]
-
-		if ok {
-			stringToAction[action.String()] = action
-		} else {
-			detailedActions[action.Type()] = map[string]Action{action.String(): action}
-		}
-	}
-
-	return ActionsHandler{DetailedActions: detailedActions, Actions: actionsMap}
+	return actionsMap
 }
 
 type Phase struct {
