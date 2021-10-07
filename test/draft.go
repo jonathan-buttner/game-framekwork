@@ -47,21 +47,21 @@ func (d DraftTest) ExecuteSkipUseResources() {
 	actions.Actions[phase.SkipUseResources][0].Execute(&core.GameState{})
 }
 
-type DraftTestCreator struct {
+type DraftTestSetupInfo struct {
 	Player1 PlayerInfo
 	Player2 PlayerInfo
 }
 
-func (d DraftTestCreator) Create(ctrl *gomock.Controller) DraftTest {
-	p1HandSize := len(d.Player1.HandSetup)
-	p2HandSize := len(d.Player2.HandSetup)
+func NewDraftTest(ctrl *gomock.Controller, setupInfo DraftTestSetupInfo) DraftTest {
+	p1HandSize := len(setupInfo.Player1.HandSetup)
+	p2HandSize := len(setupInfo.Player2.HandSetup)
 
 	if p1HandSize != p2HandSize {
 		panic(fmt.Sprintf("player cards must be the same length, p1: %v, p2: %v", p1HandSize, p2HandSize))
 	}
 
-	player1, p1Cards := d.Player1.Create(ctrl)
-	player2, p2Cards := d.Player2.Create(ctrl)
+	player1, p1Cards := setupInfo.Player1.Create(ctrl)
+	player2, p2Cards := setupInfo.Player2.Create(ctrl)
 
 	manager := phase.NewPlayerManager([]*player.Player{player1, player2})
 	phase := phase.Phase{PlayerManager: manager, GameState: &core.GameState{}}

@@ -62,34 +62,8 @@ func TestRotateHands(t *testing.T) {
 func TestDraftASingleCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	tester := test.DraftTestCreator{
-		Player1: test.PlayerInfo{
-			Name:      "player1",
-			Resources: resource.GroupedResources{resource.Brown: 12},
-			HandSetup: []test.CardInfo{
-				{
-					UseCost:     resource.GroupedResources{resource.Brown: 1},
-					AcquireCost: resource.GroupedResources{resource.Brown: 1},
-					Orientation: deck.Trade,
-					Name:        "player1-Trade-1Brown",
-				},
-			},
-		},
-		Player2: test.PlayerInfo{
-			Name:      "player2",
-			Resources: resource.GroupedResources{resource.Brown: 1},
-			HandSetup: []test.CardInfo{
-				{
-					UseCost:     resource.GroupedResources{resource.Brown: 1},
-					AcquireCost: resource.GroupedResources{resource.Brown: 1},
-					Orientation: deck.Trade,
-					Name:        "player2-Trade-1Brown",
-				},
-			},
-		},
-	}
+	draftTest := createTwoPlayerTestWithTradeCards(ctrl)
 
-	draftTest := tester.Create(ctrl)
 	draftTest.ExecuteChooseCardByID("player1-Trade-1Brown")
 
 	_, hasPlayer1Card := draftTest.Player1.RoundTableaCards["player1-Trade-1Brown"]
@@ -99,7 +73,18 @@ func TestDraftASingleCard(t *testing.T) {
 func TestSecondPlayerDraftCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	testCreator := test.DraftTestCreator{
+	draftTest := createTwoPlayerTestWithTradeCards(ctrl)
+	draftTest.ExecuteChooseCardByID("player1-Trade-1Brown")
+	draftTest.ExecuteSkipUseResources()
+
+	draftTest.ExecuteChooseCardByID("player2-Trade-1Brown")
+
+	_, hasPlayer2Card := draftTest.Player2.RoundTableaCards["player2-Trade-1Brown"]
+	assert.True(t, hasPlayer2Card)
+}
+
+func createTwoPlayerTestWithTradeCards(ctrl *gomock.Controller) test.DraftTest {
+	setupInfo := test.DraftTestSetupInfo{
 		Player1: test.PlayerInfo{
 			Name:      "player1",
 			Resources: resource.GroupedResources{resource.Brown: 2},
@@ -126,14 +111,7 @@ func TestSecondPlayerDraftCard(t *testing.T) {
 		},
 	}
 
-	draftTest := testCreator.Create(ctrl)
-	draftTest.ExecuteChooseCardByID("player1-Trade-1Brown")
-	draftTest.ExecuteSkipUseResources()
-
-	draftTest.ExecuteChooseCardByID("player2-Trade-1Brown")
-
-	_, hasPlayer2Card := draftTest.Player2.RoundTableaCards["player2-Trade-1Brown"]
-	assert.True(t, hasPlayer2Card)
+	return test.NewDraftTest(ctrl, setupInfo)
 }
 
 func newDraftPhase(ctrl *gomock.Controller, numCardsToDeal int) (*draft.Draft, []*player.Player) {
