@@ -36,7 +36,9 @@ type OrientationActions interface {
 	// time doing a convert resource card
 	PerformUseResourceAction(game Game)
 	PerformPlayToTableaAction(game Game)
+	// Cost to execute the card's action
 	UseCost() resource.GroupedResources
+	// Cost to put the card in your tablea
 	AcquireCost() resource.GroupedResources
 	IsOrientationValid(game Game) bool
 }
